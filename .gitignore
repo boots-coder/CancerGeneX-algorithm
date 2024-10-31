@@ -1,0 +1,11 @@
+# Ignore documentation files
+#*.md
+
+# Ignore dataset files
+*.csv
+data/
+
+# Ignore specific project folders (if needed)
+.idea/
+.DS_Store  # For Mac users
+__pycache__/
