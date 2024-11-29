@@ -14,7 +14,7 @@ class BaseClassifierWrapper(ClassifierTemplate):
         self.est = None
 
     def _init_estimator(self):
-        est = self.est_class(**self.est_args)
+        est = self.est_class(**self.est_args) 
         return est
 
     def check_dir(path):
