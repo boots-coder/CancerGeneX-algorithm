@@ -49,6 +49,7 @@ class AverageSplitProcessor(FeatureSplitProcessorWrapper):
             split_finfo = dict(isSuccess=False, FailureInfo="数据的维度应该超过局部变量, 此时不使用特征划分方式")
             return None, split_finfo
 
+    # todo 解释性 按照功能进行划分- 或更好
     def split_method(self, original_X, layer):
         split_X = np.array_split(original_X,  self.split_num,  axis=1)
         return split_X

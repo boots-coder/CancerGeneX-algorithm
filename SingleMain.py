@@ -12,7 +12,7 @@ if __name__ == '__main__':
         #  temp = sys.stdout ##保存原来的输出流方式
         # sys.stdout = open('saveit2.txt', 'a')
 
-        class_num = 2
+        class_num = 6
         config = {
             "ClassNum" : class_num,  # 注意这个参数一定要改
             "Metric" : "acc",
@@ -59,11 +59,11 @@ if __name__ == '__main__':
             #     "Parameter": {},
             # },
 
-            "FeatureSplitProcessor" : {
-                "Name" : "AverageSplit",
-                "Type" : "AverageSplit",
-                "SplitNum" : 3,
-            },
+            # "FeatureSplitProcessor" : {
+            #     "Name" : "AverageSplit",
+            #     "Type" : "AverageSplit",
+            #     "SplitNum" : 3,
+            # },
 
             "FeatureProcessors": {
                 "0": {
@@ -153,7 +153,7 @@ if __name__ == '__main__':
                         }
                     },
 
-                "DNN" : {
+                "BNN" : {
                     "Layers" : None,
                     "Builder" : "DL",
                     "DataType": ["Global", "Local"],
@@ -163,7 +163,7 @@ if __name__ == '__main__':
                     },
                     "Model" : {
                         "name" : "BNN",
-                        "Parameter" : {"ClassNum" : 2}
+                        "Parameter" : {"ClassNum" : 6}
                     },
                     "LossFun" : {
                         "name" : "CrossEntropyLoss",
@@ -177,40 +177,40 @@ if __name__ == '__main__':
             },
         }
 
-        # def load_data(config):
-        #     import os.path
-        #     import pandas as pd
-        #     # load data
-        #     mat = pd.read_csv(r"data.csv", sep=",")
-        #     Y = mat["label"].values
-        #     del mat["label"]
-        #     mat = mat.set_index("Unnamed: 0")
-        #     name = mat.columns.tolist()
-        #     X = mat.values
-        #
-        #     config["ClassNum"] = 6
-        #
-        #     return X, Y,config
         def load_data(config):
+            import os.path
             import pandas as pd
-
-            # load the merged colon data
-            mat = pd.read_csv(r"merged_colon_data.csv", sep=",")
-
-            # Separate the label (Y) from the feature matrix (X)
-            Y = mat["Label"].values
-            del mat["Label"]
-            # 将标签从 -1 和 1 转换为 0 和 1
-            Y[Y == -1] = 0
-
-            # No need to set index; extract column names and features directly
+            # load data
+            mat = pd.read_csv(r"data.csv", sep=",")
+            Y = mat["label"].values
+            del mat["label"]
+            mat = mat.set_index("Unnamed: 0")
             name = mat.columns.tolist()
             X = mat.values
 
-            # Update config for 2-class problem (if applicable, you can adjust this)
-            config["ClassNum"] = 2
+            config["ClassNum"] = 6
 
-            return X, Y, config
+            return X, Y,config
+        # def load_data(config):
+        #     import pandas as pd
+        #
+        #     # load the merged colon data
+        #     mat = pd.read_csv(r"merged_colon_data.csv", sep=",")
+        #
+        #     # Separate the label (Y) from the feature matrix (X)
+        #     Y = mat["Label"].values
+        #     del mat["Label"]
+        #     # 将标签从 -1 和 1 转换为 0 和 1
+        #     Y[Y == -1] = 0
+        #
+        #     # No need to set index; extract column names and features directly
+        #     name = mat.columns.tolist()
+        #     X = mat.values
+        #
+        #     # Update config for 2-class problem (if applicable, you can adjust this)
+        #     config["ClassNum"] = 2
+        #
+        #     return X, Y, config
 
 
         # X_train, X_test, y_train, y_test, config = load_KIRP_cnv_data(config)

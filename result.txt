@@ -1,0 +1,898 @@
+/opt/anaconda3/envs/dl/bin/python /Users/bootscoder/Documents/岳老师-科研/贾浩轩-Adap-BDCM/paper2/Adap-BDCM-main/SingleMain.py
+==================执行循环前的预处理开始==================
+训练集大小: 2784 , 维度: 24174
+循环前的预处理器数量: 1
+循环前的预处理器的名字: ['MinMax']
+==================执行循环前的预处理结束==================
+==================第1层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 1
+使用的特征筛选器的名字分别是 ['GCLasso']
+GCLasso使用之前筛选好的特征
+最终获得的筛选特征数量是: 3833
+==================特征筛选算法执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+Building classifiers:   0%|          | 0/2 [00:00<?, ?it/s]==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [06:34<06:34, 394.71s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8362, GaussianNBClassifier : 0.6753, BernoulliNBClassifier : 0.5618, KNeighborsClassifier_1 : 0.7026, KNeighborsClassifier_2 : 0.6710, KNeighborsClassifier_3 : 0.6853, GradientBoostingClassifier : 0.8721, SVCClassifier_1 : 0.8376, SVCClassifier_2 : 0.8606, SVCClassifier_3 : 0.8376, LogisticRegressionClassifier_1 : 0.8721, LogisticRegressionClassifier_2 : 0.8951, LogisticRegressionClassifier_3 : 0.8506,
+筛选出的基分类器: ['LogisticRegressionClassifier_2', 'GradientBoostingClassifier', 'LogisticRegressionClassifier_1']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x320916710>
+开始训练（早停，使用批量）
+在第 12 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 3833}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x323241d20>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [06:42<00:00, 201.40s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9349    0.9029    0.9186       175
+           1     0.9537    0.8957    0.9238       115
+           2     0.9434    0.9259    0.9346       108
+           3     0.9259    0.9346    0.9302       107
+           4     0.8684    0.9167    0.8919       108
+           5     0.7473    0.8193    0.7816        83
+
+    accuracy                         0.9023       696
+   macro avg     0.8956    0.8992    0.8968       696
+weighted avg     0.9053    0.9023    0.9032       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9580    0.6514    0.7755       175
+           1     0.8190    0.8261    0.8225       115
+           2     0.8763    0.7870    0.8293       108
+           3     0.8362    0.9065    0.8700       107
+           4     0.8571    0.8333    0.8451       108
+           5     0.4895    0.8434    0.6195        83
+
+    accuracy                         0.7917       696
+   macro avg     0.8060    0.8080    0.7936       696
+weighted avg     0.8321    0.7917    0.7983       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第1层执行结束===============
+第 1 层的精度: 0.8175287356321839
+==================第2层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [17:07<17:07, 1027.13s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8922, GaussianNBClassifier : 0.8147, BernoulliNBClassifier : 0.5833, KNeighborsClassifier_1 : 0.7342, KNeighborsClassifier_2 : 0.7126, KNeighborsClassifier_3 : 0.7241, GradientBoostingClassifier : 0.8736, SVCClassifier_1 : 0.8549, SVCClassifier_2 : 0.8736, SVCClassifier_3 : 0.8563, LogisticRegressionClassifier_1 : 0.8807, LogisticRegressionClassifier_2 : 0.8764, LogisticRegressionClassifier_3 : 0.8664,
+筛选出的基分类器: ['ExtraTreesClassifier', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x341826750>
+开始训练（早停，使用批量）
+在第 8 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x341dfc740>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [17:12<00:00, 516.42s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9341    0.8914    0.9123       175
+           1     0.9009    0.8696    0.8850       115
+           2     0.9340    0.9167    0.9252       108
+           3     0.9009    0.9346    0.9174       107
+           4     0.8716    0.8796    0.8756       108
+           5     0.7065    0.7831    0.7429        83
+
+    accuracy                         0.8836       696
+   macro avg     0.8747    0.8792    0.8764       696
+weighted avg     0.8867    0.8836    0.8847       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9000    0.7714    0.8308       175
+           1     0.7966    0.8174    0.8069       115
+           2     0.8205    0.8889    0.8533       108
+           3     0.9438    0.7850    0.8571       107
+           4     0.9294    0.7315    0.8187       108
+           5     0.5182    0.8554    0.6455        83
+
+    accuracy                         0.8032       696
+   macro avg     0.8181    0.8083    0.8020       696
+weighted avg     0.8364    0.8032    0.8104       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第2层执行结束===============
+第 2 层的精度: 0.8577586206896551
+==================第3层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [25:03<25:03, 1503.92s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8894, GaussianNBClassifier : 0.8233, BernoulliNBClassifier : 0.5876, KNeighborsClassifier_1 : 0.7198, KNeighborsClassifier_2 : 0.7112, KNeighborsClassifier_3 : 0.7198, GradientBoostingClassifier : 0.8463, SVCClassifier_1 : 0.8764, SVCClassifier_2 : 0.8779, SVCClassifier_3 : 0.8563, LogisticRegressionClassifier_1 : 0.8865, LogisticRegressionClassifier_2 : 0.8922, LogisticRegressionClassifier_3 : 0.8764,
+筛选出的基分类器: ['LogisticRegressionClassifier_2', 'ExtraTreesClassifier', 'LogisticRegressionClassifier_1']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x341e49b90>
+开始训练（早停，使用批量）
+在第 7 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x341dfe340>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [25:09<00:00, 754.52s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9345    0.8971    0.9155       175
+           1     0.9009    0.8696    0.8850       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.8938    0.9439    0.9182       107
+           4     0.8696    0.9259    0.8969       108
+           5     0.7619    0.7711    0.7665        83
+
+    accuracy                         0.8922       696
+   macro avg     0.8839    0.8874    0.8852       696
+weighted avg     0.8933    0.8922    0.8924       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9918    0.6914    0.8148       175
+           1     0.8351    0.7043    0.7642       115
+           2     0.9307    0.8704    0.8995       108
+           3     0.8991    0.9159    0.9074       107
+           4     0.8197    0.9259    0.8696       108
+           5     0.4552    0.7952    0.5789        83
+
+    accuracy                         0.8046       696
+   macro avg     0.8219    0.8172    0.8057       696
+weighted avg     0.8515    0.8046    0.8142       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第3层执行结束===============
+第 3 层的精度: 0.8433908045977011
+==================第4层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [21:18<21:18, 1278.38s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8894, GaussianNBClassifier : 0.8089, BernoulliNBClassifier : 0.5647, KNeighborsClassifier_1 : 0.7342, KNeighborsClassifier_2 : 0.7270, KNeighborsClassifier_3 : 0.7213, GradientBoostingClassifier : 0.8664, SVCClassifier_1 : 0.8779, SVCClassifier_2 : 0.8865, SVCClassifier_3 : 0.8736, LogisticRegressionClassifier_1 : 0.8908, LogisticRegressionClassifier_2 : 0.8908, LogisticRegressionClassifier_3 : 0.8851,
+筛选出的基分类器: ['LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'ExtraTreesClassifier']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x342135950>
+开始训练（早停，使用批量）
+在第 9 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x341dff920>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [21:23<00:00, 641.74s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9401    0.8971    0.9181       175
+           1     0.9027    0.8870    0.8947       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.8947    0.9533    0.9231       107
+           4     0.8547    0.9259    0.8889       108
+           5     0.7875    0.7590    0.7730        83
+
+    accuracy                         0.8951       696
+   macro avg     0.8871    0.8898    0.8879       696
+weighted avg     0.8959    0.8951    0.8950       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9618    0.7200    0.8235       175
+           1     0.8487    0.8783    0.8632       115
+           2     0.9158    0.8056    0.8571       108
+           3     0.8376    0.9159    0.8750       107
+           4     0.8532    0.8611    0.8571       108
+           5     0.5600    0.8434    0.6731        83
+
+    accuracy                         0.8261       696
+   macro avg     0.8295    0.8374    0.8249       696
+weighted avg     0.8521    0.8261    0.8305       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第4层执行结束===============
+第 4 层的精度: 0.8721264367816092
+==================第5层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [40:22<40:22, 2422.56s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8879, GaussianNBClassifier : 0.8477, BernoulliNBClassifier : 0.5977, KNeighborsClassifier_1 : 0.7141, KNeighborsClassifier_2 : 0.6911, KNeighborsClassifier_3 : 0.7026, GradientBoostingClassifier : 0.8779, SVCClassifier_1 : 0.8922, SVCClassifier_2 : 0.8865, SVCClassifier_3 : 0.8721, LogisticRegressionClassifier_1 : 0.8951, LogisticRegressionClassifier_2 : 0.8908, LogisticRegressionClassifier_3 : 0.8851,
+筛选出的基分类器: ['LogisticRegressionClassifier_1', 'SVCClassifier_1', 'LogisticRegressionClassifier_2']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x342138d50>
+开始训练（早停，使用批量）
+在第 9 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x342198e40>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [40:27<00:00, 1213.83s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9401    0.8971    0.9181       175
+           1     0.9027    0.8870    0.8947       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.8947    0.9533    0.9231       107
+           4     0.8500    0.9444    0.8947       108
+           5     0.8052    0.7470    0.7750        83
+
+    accuracy                         0.8966       696
+   macro avg     0.8893    0.8909    0.8892       696
+weighted avg     0.8973    0.8966    0.8961       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9207    0.8629    0.8909       175
+           1     0.9022    0.7217    0.8019       115
+           2     0.9667    0.8056    0.8788       108
+           3     0.8361    0.9533    0.8908       107
+           4     0.8522    0.9074    0.8789       108
+           5     0.5841    0.7952    0.6735        83
+
+    accuracy                         0.8434       696
+   macro avg     0.8436    0.8410    0.8358       696
+weighted avg     0.8610    0.8434    0.8465       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第5层执行结束===============
+第 5 层的精度: 0.8879310344827587
+==================第6层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [23:22<23:22, 1402.95s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8922, GaussianNBClassifier : 0.8750, BernoulliNBClassifier : 0.5589, KNeighborsClassifier_1 : 0.7313, KNeighborsClassifier_2 : 0.7241, KNeighborsClassifier_3 : 0.7227, GradientBoostingClassifier : 0.8793, SVCClassifier_1 : 0.8894, SVCClassifier_2 : 0.8922, SVCClassifier_3 : 0.8678, LogisticRegressionClassifier_1 : 0.8908, LogisticRegressionClassifier_2 : 0.8922, LogisticRegressionClassifier_3 : 0.8851,
+筛选出的基分类器: ['ExtraTreesClassifier', 'SVCClassifier_2', 'LogisticRegressionClassifier_2']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x34219c590>
+开始训练（早停，使用批量）
+在第 7 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x34219ace0>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [23:26<00:00, 703.47s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9408    0.9086    0.9244       175
+           1     0.9107    0.8870    0.8987       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.9027    0.9533    0.9273       107
+           4     0.8293    0.9444    0.8831       108
+           5     0.8108    0.7229    0.7643        83
+
+    accuracy                         0.8966       696
+   macro avg     0.8895    0.8888    0.8879       696
+weighted avg     0.8975    0.8966    0.8959       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9444    0.7771    0.8527       175
+           1     0.8257    0.7826    0.8036       115
+           2     0.8991    0.9074    0.9032       108
+           3     0.8909    0.9159    0.9032       107
+           4     0.8571    0.8889    0.8727       108
+           5     0.5357    0.7229    0.6154        83
+
+    accuracy                         0.8305       696
+   macro avg     0.8255    0.8325    0.8251       696
+weighted avg     0.8473    0.8305    0.8350       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第6层执行结束===============
+第 6 层的精度: 0.8663793103448276
+==================第7层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+Building classifiers:   0%|          | 0/2 [00:00<?, ?it/s]==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+当前层不同分类器的指标: ExtraTreesClassifier : 0.8894, GaussianNBClassifier : 0.8649, BernoulliNBClassifier : 0.5560, KNeighborsClassifier_1 : 0.7270, KNeighborsClassifier_2 : 0.7126, KNeighborsClassifier_3 : 0.7126, GradientBoostingClassifier : 0.8606, SVCClassifier_1 : 0.8966, SVCClassifier_2 : 0.8822, SVCClassifier_3 : 0.8736, LogisticRegressionClassifier_1 : 0.8966, LogisticRegressionClassifier_2 : 0.8966, LogisticRegressionClassifier_3 : 0.8908,
+筛选出的基分类器: ['SVCClassifier_1', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+Building classifiers:  50%|█████     | 1/2 [16:23<16:23, 983.02s/it, Last Built=AdaptiveEnsembleClassifyByNum]MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x3423ed050>
+开始训练（早停，使用批量）
+在第 14 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x3424a49e0>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [16:31<00:00, 495.83s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9408    0.9086    0.9244       175
+           1     0.9107    0.8870    0.8987       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.8947    0.9533    0.9231       107
+           4     0.8430    0.9444    0.8908       108
+           5     0.8000    0.7229    0.7595        83
+
+    accuracy                         0.8966       696
+   macro avg     0.8887    0.8888    0.8877       696
+weighted avg     0.8971    0.8966    0.8959       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9437    0.8629    0.9015       175
+           1     0.9479    0.7913    0.8626       115
+           2     0.8991    0.9074    0.9032       108
+           3     0.8264    0.9346    0.8772       107
+           4     0.7984    0.9537    0.8692       108
+           5     0.7407    0.7229    0.7317        83
+
+    accuracy                         0.8664       696
+   macro avg     0.8594    0.8621    0.8576       696
+weighted avg     0.8727    0.8664    0.8663       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第7层执行结束===============
+第 7 层的精度: 0.8951149425287356
+==================第8层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [09:48<09:48, 588.87s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8908, GaussianNBClassifier : 0.8779, BernoulliNBClassifier : 0.5603, KNeighborsClassifier_1 : 0.7385, KNeighborsClassifier_2 : 0.7399, KNeighborsClassifier_3 : 0.7371, GradientBoostingClassifier : 0.8908, SVCClassifier_1 : 0.8951, SVCClassifier_2 : 0.8879, SVCClassifier_3 : 0.8750, LogisticRegressionClassifier_1 : 0.8937, LogisticRegressionClassifier_2 : 0.8951, LogisticRegressionClassifier_3 : 0.8879,
+筛选出的基分类器: ['SVCClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_1']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x342485950>
+开始训练（早停，使用批量）
+在第 6 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x3424a5b60>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [09:53<00:00, 296.54s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9408    0.9086    0.9244       175
+           1     0.9107    0.8870    0.8987       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.8947    0.9533    0.9231       107
+           4     0.8430    0.9444    0.8908       108
+           5     0.8000    0.7229    0.7595        83
+
+    accuracy                         0.8966       696
+   macro avg     0.8887    0.8888    0.8877       696
+weighted avg     0.8971    0.8966    0.8959       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9270    0.7257    0.8141       175
+           1     0.7619    0.8348    0.7967       115
+           2     0.9551    0.7870    0.8629       108
+           3     0.8509    0.9065    0.8778       107
+           4     0.8532    0.8611    0.8571       108
+           5     0.5537    0.8072    0.6569        83
+
+    accuracy                         0.8118       696
+   macro avg     0.8170    0.8204    0.8109       696
+weighted avg     0.8364    0.8118    0.8165       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第8层执行结束===============
+第 8 层的精度: 0.8793103448275862
+==================第9层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [09:54<09:54, 594.23s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8908, GaussianNBClassifier : 0.8793, BernoulliNBClassifier : 0.5589, KNeighborsClassifier_1 : 0.7270, KNeighborsClassifier_2 : 0.7141, KNeighborsClassifier_3 : 0.7170, GradientBoostingClassifier : 0.8937, SVCClassifier_1 : 0.8865, SVCClassifier_2 : 0.8836, SVCClassifier_3 : 0.8822, LogisticRegressionClassifier_1 : 0.8922, LogisticRegressionClassifier_2 : 0.8966, LogisticRegressionClassifier_3 : 0.8865,
+筛选出的基分类器: ['LogisticRegressionClassifier_2', 'GradientBoostingClassifier', 'LogisticRegressionClassifier_1']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x342a2e750>
+开始训练（早停，使用批量）
+在第 8 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x3424a6f80>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [09:59<00:00, 299.95s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9405    0.9029    0.9213       175
+           1     0.9027    0.8870    0.8947       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.8947    0.9533    0.9231       107
+           4     0.8430    0.9444    0.8908       108
+           5     0.8000    0.7229    0.7595        83
+
+    accuracy                         0.8951       696
+   macro avg     0.8873    0.8878    0.8865       696
+weighted avg     0.8957    0.8951    0.8944       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9821    0.6286    0.7666       175
+           1     0.8151    0.8435    0.8291       115
+           2     0.8972    0.8889    0.8930       108
+           3     0.8534    0.9252    0.8879       107
+           4     0.8919    0.9167    0.9041       108
+           5     0.5191    0.8193    0.6355        83
+
+    accuracy                         0.8175       696
+   macro avg     0.8265    0.8370    0.8194       696
+weighted avg     0.8524    0.8175    0.8209       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第9层执行结束===============
+第 9 层的精度: 0.8864942528735632
+==================第10层开始执行==================
+==================特征筛选算法开始执行==================
+使用的特征筛选器的数量为: 2
+使用的特征筛选器的名字分别是 ['GCLasso', 'RecallAttribute']
+GCLasso使用之前筛选好的特征
+属性召回模块召回的数量是:2034
+最终获得的筛选特征数量是: 5867
+==================特征筛选算法执行完成==================
+==================特征融合开始执行==================
+特征融合方法:  FeatureFusion
+==================特征融合执行完成==================
+==================全局融合特征执行开始==================
+使用的融合特征处理器的数量为: 0
+==================全局融合特征执行完成==================
+==================类别不平衡器执行开始==================
+SMOTE
+==================类别不平衡器执行完成==================
+==================分类器执行开始==================
+==================AdaptiveEnsembleClassifyByNum 开始构建分类器 ==================
+使用的集成分类器的名称: AdaptiveEnsembleClassifyByNum
+初始化的分类器数量: 13
+初始化的基分类器名称 ['ExtraTreesClassifier', 'GaussianNBClassifier', 'BernoulliNBClassifier', 'KNeighborsClassifier_1', 'KNeighborsClassifier_2', 'KNeighborsClassifier_3', 'GradientBoostingClassifier', 'SVCClassifier_1', 'SVCClassifier_2', 'SVCClassifier_3', 'LogisticRegressionClassifier_1', 'LogisticRegressionClassifier_2', 'LogisticRegressionClassifier_3']
+筛选后保留的基分类器的数量: 3
+Building classifiers:  50%|█████     | 1/2 [09:48<09:48, 588.44s/it, Last Built=AdaptiveEnsembleClassifyByNum]当前层不同分类器的指标: ExtraTreesClassifier : 0.8922, GaussianNBClassifier : 0.8822, BernoulliNBClassifier : 0.5718, KNeighborsClassifier_1 : 0.7299, KNeighborsClassifier_2 : 0.7256, KNeighborsClassifier_3 : 0.7026, GradientBoostingClassifier : 0.8937, SVCClassifier_1 : 0.8851, SVCClassifier_2 : 0.8836, SVCClassifier_3 : 0.8779, LogisticRegressionClassifier_1 : 0.8908, LogisticRegressionClassifier_2 : 0.8937, LogisticRegressionClassifier_3 : 0.8894,
+筛选出的基分类器: ['GradientBoostingClassifier', 'LogisticRegressionClassifier_2', 'ExtraTreesClassifier']
+==================AdaptiveEnsembleClassifyByNum分类器构建完成 ==================
+==================BNN 开始构建分类器 ==================
+mps is using
+使用的设备: mps
+MPS is available. Moving model to MPS.
+转移到mps上面的模型:  <Classification.DLClassification.Models.BaseModel.BNNWrapper object at 0x342aaa510>
+开始训练（早停，使用批量）
+在第 8 轮触发早停
+训练完成
+模型的相关配置:
+训练器的配置信息 {'name': 'TrainerWrapper', 'Parameter': {}}
+损失函数的配置信息 {'name': 'CrossEntropyLoss', 'Parameter': {}}
+模型的配置信息 {'name': 'BNN', 'Parameter': {'ClassNum': 6, 'InputSize': 5917}, 'Builder': 'DL', 'Layers': None, 'DataType': 'Global'}
+优化器的配置信息 {'name': 'Adam', 'Parameter': {'lr': 0.001}, 'parameters': <generator object Module.parameters at 0x342a384a0>}
+==================BNN分类器构建完成 ==================
+训练好的分类器(或特征提取器)总共有2个, 其中,全局分类器(或特征提取器)有2个,局部分类器(或特征提取器)有0个
+==================分类器执行完成==================
+==================开始获取相关信息(包括提取到的特征, 预测的概率值, 预测值等)==================
+Building classifiers: 100%|██████████| 2/2 [09:54<00:00, 297.15s/it, Last Built=BNN]
+分类器:AdaptiveEnsembleClassifyByNum, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.9405    0.9029    0.9213       175
+           1     0.8870    0.8870    0.8870       115
+           2     0.9429    0.9167    0.9296       108
+           3     0.8947    0.9533    0.9231       107
+           4     0.8361    0.9444    0.8870       108
+           5     0.8194    0.7108    0.7613        83
+
+    accuracy                         0.8937       696
+   macro avg     0.8868    0.8858    0.8849       696
+weighted avg     0.8943    0.8937    0.8928       696
+
+分类器:BNN, 数据类型:Global的性能指标:
+              precision    recall  f1-score   support
+
+           0     0.8509    0.7829    0.8155       175
+           1     0.8485    0.7304    0.7850       115
+           2     0.8482    0.8796    0.8636       108
+           3     0.9367    0.6916    0.7957       107
+           4     0.9111    0.7593    0.8283       108
+           5     0.4387    0.8193    0.5714        83
+
+    accuracy                         0.7759       696
+   macro avg     0.8057    0.7772    0.7766       696
+weighted avg     0.8235    0.7759    0.7878       696
+
+执行全局的特征提取器的过程结束, 最终获得的特征数量为: 2
+特征提取器的名字有:  ['AdaptiveEnsembleClassifyByNum', 'BNN']
+每个特征的属性有 ['ClassifierName', 'EstType', 'BuilderType', 'DataType', 'Layer', 'Feature_train', 'Feature_val', 'Predict', 'Probs']
+没有设置局部分类器或特征提取器
+==================获取相关信息结束(包括提取到的特征, 预测的概率值, 预测值等)==================
+==============开始执行特征处理器===============
+特征提取器的执行数量: 1
+特征提取器的执行的名字分别是:  ['0']
+==============级联后置处理器执行完成===============
+==============开始执行指标计算器===============
+指标计算器的名字 MetricsProcessor
+==============指标计算器执行完成===============
+==============开始执行级联后置处理器===============
+级联后置处理器的执行数量: 0
+==============级联后置处理器执行完成===============
+==============第10层执行结束===============
+第 10 层的精度: 0.8419540229885057
+模型的层数 =  7 最佳的指标 =  0.8951149425287356
+花费的时间: 11069.77326798439
+测试集的大小: 696 , 维度: 24174
+预测所花费的时间: 13.38504695892334
+
+Process finished with exit code 0

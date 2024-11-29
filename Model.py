@@ -164,7 +164,7 @@ class UnimodalModel():
             data = self.execute_fit_feature_selection(data, fselect_ids)
             # 保存筛选出的特征
             self.save_f_select_ids(fselect_ids, layer)
-            # 执行特征融合处理 todo 没进来？怎么做到的
+            # 执行特征融合处理  没进来？怎么做到的 layers 做一个控制
             data = self.execute_feature_and_data_fit_fusion(data, layer)
             # 使用数据生成局部数据
             data = self.split_fit_data_to_local(data, layer)
@@ -200,6 +200,7 @@ class UnimodalModel():
                 count = 0
                 best_level, best_metric = layer, metric
                 best_metric_processors = self.metrics_processor
+                print("第 " + str(layer) + " 层的精度:", metric)
             else:
                 print("第 " + str(layer) + " 层的精度:", metric)
 
@@ -681,7 +682,7 @@ class UnimodalModel():
                 global_features_num = len(global_finfos)
                 if global_features_num > 0:
                     print("执行全局的特征提取器的过程结束, 最终获得的特征数量为:", global_features_num)
-                    print("获得的特征名字有: ", list(global_finfos.keys()))
+                    print("特征提取器的名字有: ", list(global_finfos.keys()))
                     print("每个特征的属性有", list(list(global_finfos.values())[0].keys()))
 
         local_instances_num = classifier_instances.get("LocalNum")

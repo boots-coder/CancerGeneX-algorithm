@@ -133,11 +133,11 @@ class DLClassifierBuider(BuilderBuiderWrapper):
             if torch.cuda.is_available():
                 print("CUDA is available. Moving model to GPU.")
                 return model.cuda()
-            # elif torch.backends.mps.is_available():  # For macOS with MPS support
-            #     print("MPS is available. Moving model to MPS.")
-            #     model =  model.to(torch.device("mps"))
-            #     print("转移到mps上面的模型: ", model)  # 使用逗号分隔，避免字符串拼接报错
-            #     return model
+            elif torch.backends.mps.is_available():  # For macOS with MPS support
+                print("MPS is available. Moving model to MPS.")
+                model =  model.to(torch.device("mps"))
+                print("转移到mps上面的模型: ", model)  # 使用逗号分隔，避免字符串拼接报错
+                return model
             else:
                 print("Neither CUDA nor MPS is available. Using CPU.")
                 return model.to(torch.device("cpu"))
