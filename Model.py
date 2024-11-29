@@ -204,7 +204,7 @@ class UnimodalModel():
             else:
                 print("第 " + str(layer) + " 层的精度:", metric)
 
-                if metric >= best_metric:
+                if metric > best_metric:
                     count = 0
                     best_level , best_metric = layer, metric
                     best_metric_processors = self.metrics_processor
