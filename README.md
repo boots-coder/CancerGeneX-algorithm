@@ -1,14 +1,78 @@
-# Adap-BDCM: Adaptive bilinear dynamic cascade model for classification tasks on CNV datasets
+# 模型改进
 
-Place relevant datasets in the link: https://pan.baidu.com/s/1LlEMfBp_DoNLPHwErKbY2w?pwd=gmbg Extract code gmbg
+> 在GRACES这篇论文中提到“我们随机将每个数据集划分为 20% 训练集、50% 验证集和 30% 测试集，并进行了 20 次重复实验。我们选择了这种==低训练比例是因为高训练比例会导致每种方法都能达到极高的表现==（这一点可以在 DNP 论文中看到；Liu et al. 2017）。” 基于这种更能体现模型在低样本高纬度数据中学习能力的数据集划分方法， 我同样用到了DBMC中；并且应用到如下数据集中： datasets = [    "ALLAML.mat", "colon.mat", "GLI_85.mat",    "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat" ] 发现 ：
+>
+> 1. DBCM在GLI_85数据集中表现较差，auc为 0.61 
+> 2. 单纯的使用GCLASSO（其是DBCM代码中的特征选择器）Leukemia表现最差，auc 0.6071 
+> 3. GRACES 在SMK_187中最差 auc为0.66 
+> 4. GRACES 时间复杂度最长，比其他两种方法长至少好几百倍数 
+>
+> 
+>
+> 就这些发现，改进模型，以期望在这六个数据集中均表现的比较好； 以显著改进DBCM实验框架，或者GRACES框架
 
-When using our code, please refer to our article "Adapt BDCM: Adaptive Bilinear Dynamic Cascade Model for Classification Tasks on CNV Datasets" as much as possible. If you want to use it commercially, please contact us by yuejunhong@tyut.edu.cn.
+![image-20240927201459515](https://markdown-pictures-jhx.oss-cn-beijing.aliyuncs.com/picgo/image-20240927201459515.png)
 
-If you have any other improvements that you would like to discuss with us, please contact us by 1324187847@qq.com,yuejunhong@tyut.edu.cn.
+![image-20241206171839411](https://markdown-pictures-jhx.oss-cn-beijing.aliyuncs.com/picgo/image-20241206171839411.png)
 
-相关数据集放在 链接：https://pan.baidu.com/s/1LlEMfBp_DoNLPHwErKbY2w?pwd=gmbg 提取码：gmbg
 
-当您使用我们的代码时，请尽量引用我们的文章《Adap-BDCM: Adaptive bilinear dynamic cascade model for classification tasks on CNV datasets》，如果您要商用，请联系yuejunhong@tyut.edu.cn.
 
-如果您有其他方面的改进，想与我们进行讨论，请联系1324187847@qq.com,yuejunhong@tyut.edu.cn.
-sometest1
+
+
+下面是一个潜在的整合思路，旨在结合GRACES和DBCM两套框架的优势，并克服在不同数据集上的局限性，以在这六个数据集上获得更好的综合表现。该思路在一定程度上借鉴“多阶段（two-stage）”与“特征前置处理（pre-processing）”以及“模块互补（modular complementarity）”的思想。
+
+
+
+### 背景与问题分析
+
+1. **DBCM框架的优点与不足**：
+    DBCM中包含特征提取模块(FEM)、特征选择模块(FSM)、级联模块(CFM)以及属性回溯子模块(ARSM)等，通过级联的方式逐步在较少训练数据情况下提取有价值的特征。但在某些特定数据集(如 GLI_85)上性能不佳，表明仅仅靠其特征选择策略或模块搭配并不足以稳健应对所有场景。
+
+2. **GRACES框架的优点与不足**：
+    GRACES通过迭代式的特征选择和图结构建模(如GraphSAGE)来捕捉特征间的关系，有助于在高维低样本情况下挖掘潜在有用的特征组合。其较高的时间复杂度与在特定数据集(如 SMK_CAN_187)上的AUC偏低成为主要障碍。同时，如果训练数据比例过高，会使GRACES与对照方法的性能差距不明显（就像论文里提到DNP那样），因此GRACES倾向于低训练比例以强调方法的特征学习能力。
+
+3. **两者的潜在互补性**：
+
+   - DBCM在传统特征流程（FEM、FSM、CFM）的管线式结构中对特征进行逐层筛选和融合，较为直观，但可能缺乏对特征之间高阶关系的深入建模。
+   - GRACES通过构建特征间的图结构，引入GraphSAGE等GNN层，从而捕捉特征之间的关联结构，进行“图信号处理”，但开销较大且在某些数据集泛化欠佳。
+
+   因此，将DBCM的特征初筛与GRACES的图结构特征表示能力进行整合，可能获得更具鲁棒性与普适性的框架。
+
+### 整合思路与实施方案
+
+**总体框架**：
+ 采用一个两阶段的整合流程：
+
+1. **阶段一（预筛与稳定特征选择）**：利用DBCM的FEM和FSM模块对原始高维数据进行初步特征筛选与过滤。
+   - 在这一阶段，借助DBCM的特征选择子模块(FSM)或引入GCLASSO等经典稀疏正则化方法，先将数千维的特征压缩到数百甚至更少的精炼特征集合中。
+   - 同时在该步骤中，不追求极致的准确率，而是侧重稳定性和泛化性，通过在验证集上调优FEM与FSM，使得输出一组稳定且信息量高的子特征集。这个子集应在不同数据集上表现相对稳健，减少在后续阶段的计算负担。
+2. **阶段二（图建模与迭代式特征精炼）**：将阶段一的精选特征子集输入到GRACES框架中。
+   - 在该阶段，由于输入特征已经大大减少，GRACES在构建特征图和计算梯度、进行迭代特征选择的计算量大幅降低。
+   - 对GRACES的迭代过程进行适当的修改：
+     - 可在构造图时使用DBCM已经选中的特征作为初始偏置特征，并降低迭代轮数或限制GraphSAGE层数，从而减少计算开销。
+     - 可对GRACES参数进行微调：例如缩短迭代次数、减少n_dropouts次数，或在input layer后进行额外的特征过滤，以平衡算法复杂度与性能。
+   - 使用GRACES特有的F-correction（gradient矫正）策略与GraphSAGE对特征间非线性关系进行建模，提高在复杂数据集如SMK_CAN_187上的表现。
+
+**其他优化策略**：
+
+1. **特征集成(Ensemble)策略**：
+    在最终阶段对分类器进行训练时，将DBCM在Cascade Layers后的深度融合特征与GRACES最终选择的特征融合在一起。具体做法：
+   - 将DBCM框架的最后输出层与GRACES的特征选择结果拼接，然后输入传统分类器（如SVM、随机森林或轻量级的MLP）进行学习。
+   - 在验证集上根据AUC、F1、精确率等指标选择合适的融合策略（加权平均或拼接后再次进行特征选择）。
+2. **控制计算成本**：
+    若GRACES计算耗时过长，可考虑以下措施：
+   - 限制GRACES迭代选择特征数量（比如不需要从1开始一直选到上限，而是在DBCM先选出一批，然后GRACES只补充性选取少量特征）。
+   - 对GraphSAGE层的宽度或深度进行限制，将其简化为GraphConv或GAT的单层结构，用较少的参数量降低计算成本。
+   - 使用近似方法构建图，减少全量相似度计算和大规模矩阵操作，如对特征进行分块处理或使用局部近似图构建。
+3. **参数调优与AutoML扩展**：
+    可以将整个两阶段框架封装到一个参数搜索的过程中（如使用Bayesian Optimization或Hyperopt），对DBCM与GRACES的关键参数（特征选择阈值、dropout比例、f_correct比例、alpha阈值、GraphSAGE层数）进行联合调优，以找到在全数据集(ALLAML, colon, GLI_85, leukemia, Prostate_GE, SMK_CAN_187)上表现较优的统一超参组合或数据集特定的最佳参数集。
+
+### 总结
+
+通过以上整合策略，期望达成以下几点改进：
+
+- 利用DBCM的特征筛选能力在前期降低特征维度和复杂度，为GRACES提供一个更精炼的特征子集，从而减少GRACES的计算开销与过拟合风险。
+- 借助GRACES的图结构特征建模与梯度修正策略，为DBCM初选后的特征再做深度关系挖掘，弥补DBCM在高阶特征关系建模上的不足。
+- 在最终结果上，通过集成或再次选择，兼顾多数据集的稳定性与较高的分类性能，使模型在六个数据集上都能获得较为均衡且更优的表现。
+
+这一思路有助于兼顾DBCM与GRACES的优点，同时缓解各自的不足，最终实现显著改进实验框架、提升性能与稳定性的目标。

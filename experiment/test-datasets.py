@@ -3,7 +3,6 @@
 from sklearn.model_selection import train_test_split
 
 from Model import UnimodalModel
-from sklearn.metrics import roc_auc_score
 
 if __name__ == '__main__':
     if __name__ == '__main__':
@@ -187,77 +186,118 @@ if __name__ == '__main__':
         #     config["ClassNum"] = 6
         #
         #     return X, Y,config
-        import numpy as np
-        import pandas as pd
-        import scipy.io
-        from sklearn.model_selection import train_test_split
+        # def load_data(config):
+        #     import pandas as pd
+        #
+        #     # load the merged colon data
+        #     mat = pd.read_csv(r"merged_colon_data.csv", sep=",")
+        #
+        #     # Separate the label (Y) from the feature matrix (X)
+        #     Y = mat["Label"].values
+        #     del mat["Label"]
+        #     # 将标签从 -1 和 1 转换为 0 和 1
+        #     Y[Y == -1] = 0
+        #
+        #     # No need to set index; extract column names and features directly
+        #     name = mat.columns.tolist()
+        #     X = mat.values
+        #
+        #     # Update config for 2-class problem (if applicable, you can adjust this)
+        #     config["ClassNum"] = 2
+        #
+        #     return X, Y, config
+        #
+        #
+        # # X_train, X_test, y_train, y_test, config = load_KIRP_cnv_data(config)
+        # X, y, config = load_data(config)
+        # X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.4)
+        #
+from sklearn.decomposition import PCA
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
+import scipy.io
+import os
 
 
-        def load_data(name, file_path, config):
-            """
-            Load dataset based on the provided name and file path.
-            Adjusts labels to ensure compatibility with a binary classification task.
-            """
-            if file_path.endswith('.csv'):
-                # Load CSV file (e.g., merged_colon_data.csv or Prostate_GE_labels.csv)
-                data = pd.read_csv(file_path, sep=",")
-                y = np.int64(data['Label'])  # Extract labels
-                del data['Label']  # Remove the label column from features
-                X = data.values
-            elif file_path.endswith('.mat'):
-                # Load .mat file
-                mat_data = scipy.io.loadmat(file_path)
-                X = mat_data['X']  # Extract feature matrix
-                y = np.int64(mat_data['Y']).flatten()  # Extract labels
-            else:
-                raise ValueError("Unsupported file format: {}".format(file_path))
+def load_data_from_mat(file_path):
+    """
+    Load dataset from .mat file, extract features (X) and labels (Y).
+    """
+    mat_data = scipy.io.loadmat(file_path)
 
-            # Process labels based on dataset name
-            if name in ['colon', 'leukemia']:
-                y[y == -1] = 0  # Convert -1 to 0 for binary classification
-            else:
-                # Adjust labels for datasets with labels starting from 1 (e.g., Prostate_GE)
-                y = y - 1  # Convert labels to start from 0
+    # Extract features and labels
+    X = mat_data['X']  # Assuming the feature matrix is stored under the key 'X'
+    Y = mat_data['Y'].flatten()  # Assuming the labels are stored under the key 'Y'
 
-            # Update config for 2-class problem
-            config["ClassNum"] = 2
+    # Convert labels to 0, 1
+    if -1 in Y:  # Convert -1 to 0
+        Y[Y == -1] = 0
+    elif 2 in Y:  # Convert 2 to 0 for {1, 2} labels
+        Y[Y == 2] = 0
 
-            return X, y, config
+    return X, Y
 
 
+# List of datasets
+datasets = [
+    "ALLAML.mat", "colon.mat", "GLI_85.mat",
+    "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
+]
 
-        # Define datasets
-        datasets = {
-            # "colon": "merged_colon_data.csv",
-            # "leukemia": "leukemia.mat",
-            "GLI_85": "data/GLI_85.mat"
-        }
+# Directory containing datasets
+data_dir = "../data/"  # Update the directory if necessary
 
-        # Iterate over datasets
-        for name, file_path in datasets.items():
-            try:
-                # Load dataset
-                X, Y, config = load_data(name, file_path, config)
+# Dictionary to store AUC results
+auc_results = {}
 
-                # Split data: first into train+validation (70%) and test (30%)
-                x_train_val, x_test, y_train_val, y_test = train_test_split(
-                    X, Y, test_size=0.3, random_state=42, stratify=Y
-                )
+# Loop through each dataset
+for dataset in datasets:
+    file_path = os.path.join(data_dir, dataset)
+    try:
+        # Load dataset
+        X, Y = load_data_from_mat(file_path)
 
-                # Further split train+validation (70%) into train (20%) and validation (50%)
-                x_train, x_val, y_train, y_val = train_test_split(
-                    x_train_val, y_train_val, test_size=(50 / 70), random_state=42, stratify=y_train_val
-                )
-                # Initialize and train the model
-                model = UnimodalModel(config)
-                model.fit(x_train, y_train, x_test, y_test)
+        # Handle high-dimensional data (optional PCA for datasets with large feature sets)
+        # if X.shape[1] > 5000:  # If more than 5000 features
+        #     print(f"Applying PCA to reduce features for {dataset}")
+        #     pca = PCA(n_components=50)  # Retain 50 principal components
+        #     X = pca.fit_transform(X)
 
-                # Predict on test set
-                y_pred = model.predict(x_test)
+        # Split data: first into train+validation (70%) and test (30%)
+        x_train_val, x_test, y_train_val, y_test = train_test_split(
+            X, Y, test_size=0.3, random_state=42, stratify=Y
+        )
 
-                # Evaluate the model (e.g., AUC or accuracy)
-                auc = roc_auc_score(y_test, y_pred)
-                print(f"Dataset: {name}, AUC: {auc:.4f}")
+        # Further split train+validation (70%) into train (20%) and validation (50%)
+        x_train, x_val, y_train, y_val = train_test_split(
+            x_train_val, y_train_val, test_size=(50 / 70), random_state=42, stratify=y_train_val
+        )
+        # Initialize and train your model (replace UnimodalModel with your model class)
+        model = UnimodalModel(config)  # Replace UnimodalModel with your actual model
+        model.fit(x_train, y_train, x_val, y_val)
 
-            except Exception as e:
-                print(f"Error processing dataset {name}: {e}")
+        # Predict probabilities for the test set
+        y_pred_proba = model.predict(x_test)
+
+        # Ensure y_pred_proba is probabilities for the positive class
+        if len(y_pred_proba.shape) == 1 or y_pred_proba.shape[1] == 1:
+            # Assume binary classification and the model outputs probabilities directly
+            y_pred_proba = y_pred_proba.flatten()
+        else:
+            # Extract the probabilities for class 1 if multi-class probabilities are returned
+            y_pred_proba = y_pred_proba[:, 1]
+
+        # Calculate AUC
+        auc = roc_auc_score(y_test, y_pred_proba)
+        auc_results[dataset] = auc
+
+        print(f"{dataset}: AUC = {auc:.4f}")
+
+    except Exception as e:
+        auc_results[dataset] = f"Error: {e}"
+        print(f"Error processing {dataset}: {e}")
+
+# Print AUC results summary
+print("\nAUC Results Summary:")
+for dataset, auc in auc_results.items():
+    print(f"{dataset}: {auc}")
