@@ -123,13 +123,13 @@ class FusionFeatDispatcher(ListDispatcher):
     def execute_dispatcher_method(self, name, est_type, config):
         pass
 
-class SplitFeatureDispatcher(Dispatcher):
-    def __init__(self):
-        from Processor.Common.Template import SplitFeatureProcessorTemplate
-        super(SplitFeatureDispatcher, self).__init__(SplitFeatureProcessorTemplate)
-
-    def execute_dispatcher_method(self, name, est_type, config):
-        pass
+# class SplitFeatureDispatcher(Dispatcher):
+#     def __init__(self):
+#         from Processor.Common.Template import SplitFeatureProcessorTemplate
+#         super(SplitFeatureDispatcher, self).__init__(SplitFeatureProcessorTemplate)
+#
+#     def execute_dispatcher_method(self, name, est_type, config):
+#         pass
 
 class FeaturesProcessorDispatcher(ListDispatcher):
 

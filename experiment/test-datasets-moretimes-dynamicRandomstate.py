@@ -171,135 +171,95 @@ if __name__ == '__main__':
                 }
             },
         }
-        #
-        # def load_data(config):
-        #     import os.path
-        #     import pandas as pd
-        #     # load data
-        #     mat = pd.read_csv(r"data.csv", sep=",")
-        #     Y = mat["label"].values
-        #     del mat["label"]
-        #     mat = mat.set_index("Unnamed: 0")
-        #     name = mat.columns.tolist()
-        #     X = mat.values
-        #
-        #     config["ClassNum"] = 6
-        #
-        #     return X, Y,config
-        # def load_data(config):
-        #     import pandas as pd
-        #
-        #     # load the merged colon data
-        #     mat = pd.read_csv(r"merged_colon_data.csv", sep=",")
-        #
-        #     # Separate the label (Y) from the feature matrix (X)
-        #     Y = mat["Label"].values
-        #     del mat["Label"]
-        #     # 将标签从 -1 和 1 转换为 0 和 1
-        #     Y[Y == -1] = 0
-        #
-        #     # No need to set index; extract column names and features directly
-        #     name = mat.columns.tolist()
-        #     X = mat.values
-        #
-        #     # Update config for 2-class problem (if applicable, you can adjust this)
-        #     config["ClassNum"] = 2
-        #
-        #     return X, Y, config
-        #
-        #
-        # # X_train, X_test, y_train, y_test, config = load_KIRP_cnv_data(config)
-        # X, y, config = load_data(config)
-        # X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.4)
-        #
-from sklearn.decomposition import PCA
-from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import train_test_split
-import scipy.io
-import os
+        # !/usr/bin/env python
+        # coding=utf-8
+        from sklearn.model_selection import train_test_split
+        from Model import UnimodalModel
+        from sklearn.metrics import roc_auc_score
+        from sklearn.decomposition import PCA
+        import scipy.io
+        import os
+        import numpy as np
 
 
-def load_data_from_mat(file_path):
-    """
-    Load dataset from .mat file, extract features (X) and labels (Y).
-    """
-    mat_data = scipy.io.loadmat(file_path)
+        def load_data_from_mat(file_path):
+            """
+            Load dataset from .mat file, extract features (X) and labels (Y).
+            """
+            mat_data = scipy.io.loadmat(file_path)
 
-    # Extract features and labels
-    X = mat_data['X']  # Assuming the feature matrix is stored under the key 'X'
-    Y = mat_data['Y'].flatten()  # Assuming the labels are stored under the key 'Y'
+            # Extract features and labels
+            X = mat_data['X']  # Assuming the feature matrix is stored under the key 'X'
+            Y = mat_data['Y'].flatten()  # Assuming the labels are stored under the key 'Y'
 
-    # Convert labels to 0, 1
-    if -1 in Y:  # Convert -1 to 0
-        Y[Y == -1] = 0
-    elif 2 in Y:  # Convert 2 to 0 for {1, 2} labels
-        Y[Y == 2] = 0
+            # Convert labels to 0, 1
+            if -1 in Y:  # Convert -1 to 0
+                Y[Y == -1] = 0
+            elif 2 in Y:  # Convert 2 to 0 for {1, 2} labels
+                Y[Y == 2] = 0
 
-    return X, Y
+            return X, Y
 
 
-# List of datasets
-datasets = [
-    "ALLAML.mat", "colon.mat", "GLI_85.mat",
-    "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
-]
-# datasets = [
-#     "GLI_85.mat"
-# ]
-# Directory containing datasets
-data_dir = "../data/"  # Update the directory if necessary
+        # 您的数据集列表
+        datasets = [
+            "ALLAML.mat", "colon.mat", "GLI_85.mat",
+            "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
+        ]
 
-# Dictionary to store AUC results
-auc_results = {}
+        # 数据路径
+        data_dir = "../data/"  # 根据实际情况修改
 
-# Loop through each dataset
-for dataset in datasets:
-    file_path = os.path.join(data_dir, dataset)
-    try:
-        # Load dataset
-        X, Y = load_data_from_mat(file_path)
+        # 重复实验次数
+        n_runs = 10
 
-        # Handle high-dimensional data (optional PCA for datasets with large feature sets)
-        # if X.shape[1] > 5000:  # If more than 5000 features
-        #     print(f"Applying PCA to reduce features for {dataset}")
-        #     pca = PCA(n_components=50)  # Retain 50 principal components
-        #     X = pca.fit_transform(X)
+        # 用字典存储每个数据集对应的10次AUC结果列表
+        auc_results_runs = {ds: [] for ds in datasets}
 
-        # Split data: first into train+validation (70%) and test (30%)
-        x_train_val, x_test, y_train_val, y_test = train_test_split(
-            X, Y, test_size=0.3, random_state=42, stratify=Y
-        )
+        for run_idx in range(n_runs):
+            print(f"===== Run {run_idx + 1}/{n_runs} =====")
+            for dataset in datasets:
+                file_path = os.path.join(data_dir, dataset)
+                try:
+                    # 加载数据集
+                    X, Y = load_data_from_mat(file_path)
 
-        # Further split train+validation (70%) into train (20%) and validation (50%)
-        x_train, x_val, y_train, y_val = train_test_split(
-            x_train_val, y_train_val, test_size=(50 / 70), random_state=42, stratify=y_train_val
-        )
-        # Initialize and train your model (replace UnimodalModel with your model class)
-        model = UnimodalModel(config)  # Replace UnimodalModel with your actual model
-        model.fit(x_train, y_train, x_val, y_val)
+                    # 数据划分
+                    x_train_val, x_test, y_train_val, y_test = train_test_split(
+                        X, Y, test_size=0.3, random_state=42 + run_idx, stratify=Y
+                    )
 
-        # Predict probabilities for the test set
-        y_pred_proba = model.predict_proba(x_test)
+                    x_train, x_val, y_train, y_val = train_test_split(
+                        x_train_val, y_train_val, test_size=(50 / 70), random_state=42 + run_idx, stratify=y_train_val
+                    )
 
-        # Ensure y_pred_proba is probabilities for the positive class
-        if len(y_pred_proba.shape) == 1 or y_pred_proba.shape[1] == 1:
-            # Assume binary classification and the model outputs probabilities directly
-            y_pred_proba = y_pred_proba.flatten()
-        else:
-            # Extract the probabilities for class 1 if multi-class probabilities are returned
-            y_pred_proba = y_pred_proba[:, 1]
+                    # 初始化并训练模型
+                    model = UnimodalModel(config)  # 请确保UnimodalModel和config在您的环境中已定义
+                    model.fit(x_train, y_train, x_val, y_val)
 
-        # Calculate AUC
-        auc = roc_auc_score(y_test, y_pred_proba)
-        auc_results[dataset] = auc
+                    # 预测测试集概率
+                    y_pred_proba = model.predict_proba(x_test)
 
-        print(f"{dataset}: AUC = {auc:.4f}")
+                    # 确保得到的是正类的概率值
+                    if len(y_pred_proba.shape) == 1 or y_pred_proba.shape[1] == 1:
+                        y_pred_proba = y_pred_proba.flatten()
+                    else:
+                        y_pred_proba = y_pred_proba[:, 1]
 
-    except Exception as e:
-        auc_results[dataset] = f"Error: {e}"
-        print(f"Error processing {dataset}: {e}")
+                    # 计算AUC并存储
+                    auc = roc_auc_score(y_test, y_pred_proba)
+                    auc_results_runs[dataset].append(auc)
 
-# Print AUC results summary
-print("\nAUC Results Summary:")
-for dataset, auc in auc_results.items():
-    print(f"{dataset}: {auc}")
+                    print(f"{dataset}: AUC = {auc:.4f}")
+
+                except Exception as e:
+                    # 如果出错，存入一个NaN或其他标记值
+                    auc_results_runs[dataset].append(np.nan)
+                    print(f"Error processing {dataset}: {e}")
+
+        # 计算每个数据集的平均AUC
+        print("\nAUC Results Summary (Average over 10 runs):")
+        for dataset in datasets:
+            dataset_aucs = np.array(auc_results_runs[dataset])
+            avg_auc = np.nanmean(dataset_aucs)  # 如果有NaN就跳过它们
+            print(f"{dataset}: Mean AUC = {avg_auc:.4f}")

@@ -45,26 +45,26 @@ class GCLasso(SelectorWrapper):
         return select_infos  # 返回所有特征的索引和系数
 
 
-class GCFClassif(SelectorWrapper):
-
-    def __init__(self, name, kwargs):
-        from sklearn.feature_selection import SelectKBest, f_classif  # 引入特征选择和F检验方法
-        super(GCLasso, self).__init__(name, None, None)  # 调用父类构造函数
-        self.P = kwargs.get("P", 0.5) if kwargs != None else 0.5  # 获取P值阈值，默认为0.5
-        self.model = SelectKBest(f_classif, k=50)  # 初始化SelectKBest模型，选择前50个特征
-
-    def _obtain_selected_index(self, X_train, y_train):
-        select_infos = {"inds": [], "metrics": []}  # 选择特征的索引和P值字典
-        for ind, p_ in enumerate(self.est.pvalues_):  # 遍历P值
-            if p_ < self.P:  # 如果P值小于阈值
-                select_infos["inds"].append(ind)  # 添加索引到列表
-                select_infos["metrics"].append(p_)  # 添加P值到列表
-        select_infos["Num"] = len(select_infos["inds"])  # 记录选择特征的数量
-        return select_infos  # 返回选择特征的索引和P值
-
-    def obtain_all_index(self, X=None):
-        select_infos = {"inds": [], "metrics": []}  # 选择特征的索引和P值字典
-        for ind, p_ in enumerate(self.est.pvalues_):  # 遍历P值
-            select_infos["inds"].append(ind)  # 添加索引到列表
-            select_infos["metrics"].append(p_)  # 添加P值到列表
-        return select_infos  # 返回所有特征的索引和P值
+# class GCFClassif(SelectorWrapper):
+#
+#     def __init__(self, name, kwargs):
+#         from sklearn.feature_selection import SelectKBest, f_classif  # 引入特征选择和F检验方法
+#         super(GCLasso, self).__init__(name, None, None)  # 调用父类构造函数
+#         self.P = kwargs.get("P", 0.5) if kwargs != None else 0.5  # 获取P值阈值，默认为0.5
+#         self.model = SelectKBest(f_classif, k=50)  # 初始化SelectKBest模型，选择前50个特征
+#
+#     def _obtain_selected_index(self, X_train, y_train):
+#         select_infos = {"inds": [], "metrics": []}  # 选择特征的索引和P值字典
+#         for ind, p_ in enumerate(self.est.pvalues_):  # 遍历P值
+#             if p_ < self.P:  # 如果P值小于阈值
+#                 select_infos["inds"].append(ind)  # 添加索引到列表
+#                 select_infos["metrics"].append(p_)  # 添加P值到列表
+#         select_infos["Num"] = len(select_infos["inds"])  # 记录选择特征的数量
+#         return select_infos  # 返回选择特征的索引和P值
+#
+#     def obtain_all_index(self, X=None):
+#         select_infos = {"inds": [], "metrics": []}  # 选择特征的索引和P值字典
+#         for ind, p_ in enumerate(self.est.pvalues_):  # 遍历P值
+#             select_infos["inds"].append(ind)  # 添加索引到列表
+#             select_infos["metrics"].append(p_)  # 添加P值到列表
+#         return select_infos  # 返回所有特征的索引和P值

@@ -39,12 +39,12 @@ class FeatureConcatenation(FeatFusionTemplate):
                 continue
         return need_finfos
 
-    def obtain_need_train_finfos(self, finfos):
-        need_finfos = []
-        for finfo in finfos:
-            if finfo.get("Feature_train") is not None:
-                need_finfos.append(finfo)
-        return need_finfos
+    def obtain_need_train_finfos(self, f_infos):
+        need_f_infos = []
+        for f_info in f_infos:
+            if f_info.get("Feature_train") is not None:
+                need_f_infos.append(f_info)
+        return need_f_infos
 
     def obtain_need_predict_finfos(self, finfos):
         need_finfos = []
@@ -62,12 +62,12 @@ class FeatureConcatenation(FeatFusionTemplate):
         final_features_val = np.concatenate(final_features_val, axis=1)
         return final_features_train, final_features_val
 
-    def fit_excecute(self, original_train, original_val, finfos, layer):
+    def fit_excecute(self, original_train, original_val, f_infos, layer):
 
-        finfos_layers = self.obtain_finfos_by_layers(finfos, layer)
-        need_finfos = self.obtain_need_finfos(finfos_layers)
-        need_finfos = self.obtain_need_train_finfos(need_finfos)
-        features_train, features_val = self.obtain_final_fit_features(need_finfos)
+        f_infos_layers = self.obtain_finfos_by_layers(f_infos, layer)
+        need_f_infos = self.obtain_need_finfos(f_infos_layers)
+        need_f_infos = self.obtain_need_train_finfos(need_f_infos)
+        features_train, features_val = self.obtain_final_fit_features(need_f_infos)
 
         fusions_train = np.concatenate([original_train, features_train], axis=1)
         fusions_val = np.concatenate([original_val, features_val], axis=1)

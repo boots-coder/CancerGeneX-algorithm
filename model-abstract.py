@@ -32,7 +32,7 @@ class UnimodalModel(ABC):
         self._init_components(config)
         self.all_feature_split_processors = dict()
         self.all_feature_fusions_processors = dict()
-        self.all_split_feature_processors = dict()
+        # self.all_split_feature_processors = dict()
         self.all_fusion_feature_processors = dict()
         self.all_feature_processors = dict()
         self.all_metrics_processor = dict()
@@ -68,10 +68,10 @@ class UnimodalModel(ABC):
         """初始化特征切分处理器。"""
         pass
 
-    @abstractmethod
-    def _init_split_feature_processors(self, configs):
-        """初始化切分特征处理器。"""
-        pass
+    # @abstractmethod
+    # def _init_split_feature_processors(self, configs):
+    #     """初始化切分特征处理器。"""
+    #     pass
 
     @abstractmethod
     def _init_category_imbalance_processors(self, config):
@@ -158,10 +158,10 @@ class UnimodalModel(ABC):
         """执行融合特征处理器。"""
         pass
 
-    @abstractmethod
-    def execute_fit_split_features_processors(self, data, layer):
-        """执行切分特征处理器。"""
-        pass
+    # @abstractmethod
+    # def execute_fit_split_features_processors(self, data, layer):
+    #     """执行切分特征处理器。"""
+    #     pass
 
     @abstractmethod
     def obtain_new_update_builder_configs(self, data, layer):

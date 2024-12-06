@@ -7,9 +7,15 @@ from sklearn.model_selection import train_test_split
 
 import warnings
 
+from Processor.PreProcessor.clustering.FeatureClusterExecutor import FeatureClusterExecutor
+# from Processor.ProcessorDispatcher.Dispatcher import FeatFusionDispatcher, FeatSelectorDispatcher, \
+#     FeaturesProcessorDispatcher, MetricProcessorDispatcher, ClassifierDispatcher, CategoryImbalanceDispatcher, \
+#     PreProcessorDispatcher, PostProcessorDispatcher, FusionFeatDispatcher, SplitFeatureDispatcher, \
+#     FeatureSplitDispatcher
+
 from Processor.ProcessorDispatcher.Dispatcher import FeatFusionDispatcher, FeatSelectorDispatcher, \
     FeaturesProcessorDispatcher, MetricProcessorDispatcher, ClassifierDispatcher, CategoryImbalanceDispatcher, \
-    PreProcessorDispatcher, PostProcessorDispatcher, FusionFeatDispatcher, SplitFeatureDispatcher, \
+    PreProcessorDispatcher, PostProcessorDispatcher, FusionFeatDispatcher,  \
     FeatureSplitDispatcher
 
 warnings.filterwarnings("ignore")
@@ -30,7 +36,7 @@ class UnimodalModel():
         self._init_components(config)
         self.all_feature_split_processors = dict()
         self.all_feature_fusions_processors = dict()
-        self.all_split_feature_processors = dict()
+        # self.all_split_feature_processors = dict()
         self.all_fusion_feature_processors = dict()
         self.all_feature_processors = dict()
         self.all_metrics_processor = dict()
@@ -41,7 +47,7 @@ class UnimodalModel():
         self._init_feature_selectors(config)
         self._init_data_and_feature_fusion(config)
         self._init_fusion_feature_processors(config)
-        self._init_split_feature_processors(config)
+        # self._init_split_feature_processors(config)
         self._init_feature_split_processor(config)
         self._init_category_imbalance_processors(config)
         self._init_cascade_classifier_builder(config)
@@ -73,6 +79,7 @@ class UnimodalModel():
         else:
             raise "必须配置特征融合方法"
 
+# todo 这里执行不到，一会儿给他删了
     def _init_fusion_feature_processors(self, configs):
         fusion_features_processors_configs = configs.get("FusionFeatureProcessors", None)
         if fusion_features_processors_configs != None:
@@ -89,13 +96,13 @@ class UnimodalModel():
         else:
             self.feature_split_processor = None
 
-    def _init_split_feature_processors(self, configs):
-        split_feature_processors_config = configs.get("SplitFeatureProcessors", None)
-        if split_feature_processors_config != None:
-            split_feature_dispatcher = SplitFeatureDispatcher()
-            self.split_feature_processors = split_feature_dispatcher.obtain_instance(split_feature_processors_config)
-        else:
-            self.split_feature_processors = None
+    # def _init_split_feature_processors(self, configs):
+    #     split_feature_processors_config = configs.get("SplitFeatureProcessors", None)
+    #     if split_feature_processors_config != None:
+    #         split_feature_dispatcher = SplitFeatureDispatcher()
+    #         self.split_feature_processors = split_feature_dispatcher.obtain_instance(split_feature_processors_config)
+    #     else:
+    #         self.split_feature_processors = None
 
     def _init_category_imbalance_processors(self, config):
         category_imbalance_config = config.get("CategoryImbalance", None)
@@ -150,10 +157,11 @@ class UnimodalModel():
 
     def _fit(self, X_train, y_train, X_val, y_val):
         start_time = time.time()
-        # 在执行循环前需要先进行一些操作 todo 包括？封装数据，以及必要的调试信息
+        # 在执行循环前需要先进行一些操作 包括？封装数据，以及必要的调试信息
         data = self.execute_before_fit(X_train, y_train, X_val, y_val)
         # 在循环之前进行一些预处理操作, 比如归一化和 处理缺失值
         data = self.execute_pre_fit_processor(data)
+        data = self.execute_cluster(data)
         # 进行循环迭代, 获取
         for layer in range(1, self.max_num_iterations + 1, 1):
             # 在正式进行级联时执行一些操作，可以定义一些自己的特征选择方法
@@ -164,14 +172,14 @@ class UnimodalModel():
             data = self.execute_fit_feature_selection(data, fselect_ids)
             # 保存筛选出的特征
             self.save_f_select_ids(fselect_ids, layer)
-            # 执行特征融合处理  没进来？怎么做到的 layers 做一个控制
+            # 执行特征融合处理
             data = self.execute_feature_and_data_fit_fusion(data, layer)
             # 使用数据生成局部数据
             data = self.split_fit_data_to_local(data, layer)
             # 对融合后的数据进行处理, 这个处理应该不涉及到样本数的改变
             data = self.execute_fit_fusion_features_processors(data, layer)
             # 对划分特征进行处理, 这个处理应该不涉及到样本数的改变
-            data = self.execute_fit_split_features_processors(data, layer)
+            # data = self.execute_fit_split_features_processors(data, layer)
             # 对融合的数据执行类别不平衡的算法, 这个处理涉及到样本数的改变
             data = self.execute_category_imbalance(data, layer)
             # 更新构建器的配置信息
@@ -268,7 +276,7 @@ class UnimodalModel():
         self.change_feature_selectors(data, layer)
         self.change_feature_fusions(data, layer)
         self.change_fusion_features_processors(data, layer)
-        self.change_split_features_processors(data, layer)
+        # self.change_split_features_processors(data, layer)
         self.change_category_imbalance_processor(data, layer)
         self.change_global_classifier_builders(data, layer)
         self.change_feature_processors(data, layer)
@@ -276,6 +284,8 @@ class UnimodalModel():
         self.change_feature_types(data, layer)
 
         return data
+
+    # 执行聚类的优秀基因存储
 
     def change_feature_selectors(self, data, layer):
         pass
@@ -286,8 +296,8 @@ class UnimodalModel():
     def change_fusion_features_processors(self, data, layer):
         pass
 
-    def change_split_features_processors(self, data, layer):
-        pass
+    # def change_split_features_processors(self, data, layer):
+    #     pass
 
     def change_category_imbalance_processor(self, data, layer):
         pass
@@ -341,6 +351,7 @@ class UnimodalModel():
 
         return f_select_idxs, f_select_infos
 
+    #todo 这里是数据池的变换
     def execute_fit_feature_selection(self, data, f_select_idxs):
         if f_select_idxs is not None:
             data["Processed"] = dict()
@@ -352,7 +363,7 @@ class UnimodalModel():
             data["Processed"] = copy.deepcopy(data["Original"])
 
         if self.debug:
-            print("==================特征筛选算法执行完成==================")
+            print("==================数据池清洗工作完成==================")
 
         return data
 
@@ -374,7 +385,7 @@ class UnimodalModel():
             finfos = data.get("Finfos")
             # 进行特征融合
             fusion_train, fusion_val = self.feature_fusions.fit_excecute(original_train, original_val, finfos, layer)
-            # 将融合的数据封装回去
+            # 将融合的数据重新投入到训练和验证
             data["Processed"]["X_train"] = fusion_train
             data["Processed"]["X_val"] = fusion_val
 
@@ -443,39 +454,39 @@ class UnimodalModel():
 
         return data
 
-    def execute_fit_split_features_processors(self, data, layer):
-
-        if "Local" not in self.feature_types:
-            return data
-
-        if self.split_feature_processors is None or len(self.split_feature_processors):
-            print("没有设置切分特征处理器, 或者切分特征处理器为空")
-            return data
-
-        if self.debug:
-            print("==================局部融合特征执行开始==================")
-            split_feature_processors_name = []
-
-        # 获得原始数据 (经过特征筛选的数据)
-        processed_data = data.get("SplitFeature")
-        Xs_train, Xs_val = processed_data.get("Xs_train"), processed_data.get("Xs_val")
-        for split_feature_processor in self.split_feature_processors:
-            if split_feature_processor.executable(layer):
-                if self.debug:
-                    split_feature_processors_name.append(split_feature_processor.obtain_name())
-                Xs_train, Xs_val = split_feature_processor.excecute(Xs_train, Xs_val, layer)
-
-        data["SplitFeature"]["Xs_train"] = Xs_train
-        data["SplitFeature"]["Xs_val"] = Xs_val
-
-        if self.debug:
-            split_feature_processors_num = len(split_feature_processors_name)
-            print("使用的局部融合特征处理器的数量为:", split_feature_processors_num)
-            if split_feature_processors_num > 0:
-                print("使用的局部特征融合器的名字分别是", split_feature_processors_name)
-            print("==================局部融合特征执行完成==================")
-
-        return data
+    # def execute_fit_split_features_processors(self, data, layer):
+    #
+    #     if "Local" not in self.feature_types:
+    #         return data
+    #
+    #     # if self.split_feature_processors is None or len(self.split_feature_processors):
+    #     #     print("没有设置切分特征处理器, 或者切分特征处理器为空")
+    #     #     return data
+    #
+    #     # if self.debug:
+    #     #     print("==================局部融合特征执行开始==================")
+    #     #     split_feature_processors_name = []
+    #     #
+    #     # # 获得原始数据 (经过特征筛选的数据)
+    #     # processed_data = data.get("SplitFeature")
+    #     # Xs_train, Xs_val = processed_data.get("Xs_train"), processed_data.get("Xs_val")
+    #     # for split_feature_processor in self.split_feature_processors:
+    #     #     if split_feature_processor.executable(layer):
+    #     #         if self.debug:
+    #     #             split_feature_processors_name.append(split_feature_processor.obtain_name())
+    #     #         Xs_train, Xs_val = split_feature_processor.excecute(Xs_train, Xs_val, layer)
+    #     #
+    #     # data["SplitFeature"]["Xs_train"] = Xs_train
+    #     # data["SplitFeature"]["Xs_val"] = Xs_val
+    #
+    #     # if self.debug:
+    #     #     split_feature_processors_num = len(split_feature_processors_name)
+    #     #     print("使用的局部融合特征处理器的数量为:", split_feature_processors_num)
+    #     #     if split_feature_processors_num > 0:
+    #     #         print("使用的局部特征融合器的名字分别是", split_feature_processors_name)
+    #     #     print("==================局部融合特征执行完成==================")
+    #
+    #     return data
 
     def obtain_new_update_builder_configs(self, data, layer):
         new_cfig = dict()
@@ -816,7 +827,7 @@ class UnimodalModel():
         print("==============第" + str(layer) + "层执行结束===============")
         self.all_feature_split_processors[layer] = copy.deepcopy(self.feature_split_processor)
         self.all_feature_fusions_processors[layer] = copy.deepcopy(self.feature_fusions)
-        self.all_split_feature_processors[layer] = copy.deepcopy(self.split_feature_processors)
+        # self.all_split_feature_processors[layer] = copy.deepcopy(self.split_feature_processors)
         self.all_fusion_feature_processors[layer] = copy.deepcopy(self.fusion_features_processors)
         self.all_feature_processors[layer] = copy.deepcopy(self.feature_processors)
         self.all_metrics_processor[layer] = copy.deepcopy(self.metrics_processor)
@@ -839,18 +850,18 @@ class UnimodalModel():
         for layer in range(1, self.best_level+1, 1):
             # 在每层进行级联时执行一些相关操作
             data = self.pre_predict_cascade_data_and_infos(data, layer)
-            # 获得筛选的特征
+            # 获得筛选的特征的index - 创建一个空的index
             f_select_ids = self.obtain_cascade_f_select_ids(layer)
             # 对数据集执行特征筛选
             data = self.execute_predict_feature_selection(data, f_select_ids)
             # 对融合的特征进行处理
             data = self.execute_feature_and_data_predict_fusion(data, layer)
             # 使用数据生成局部数据
-            data = self.split_predict_data_to_local(data, layer)
+            # data = self.split_predict_data_to_local(data, layer)
             # 对融合后的数据进行处理, 这个处理应该不涉及到样本数的改变
             data = self.execute_predict_fusion_features_processors(data, layer)
             # 对划分特征进行处理, 这个处理应该不涉及到样本数的改变
-            data = self.execute_predict_split_features_processors(data, layer)
+            # data = self.execute_predict_split_features_processors(data, layer)
             # 处理机器学习方法或深度学习方法的模块
             classifier_instances = self.obtain_cascade_predict_classifier_instance(layer)
             # 提取特征
@@ -899,7 +910,7 @@ class UnimodalModel():
     def pre_predict_cascade_data_and_infos(self, data, layer):
         self.feature_split_processor = self.all_feature_split_processors[layer]
         self.feature_fusions = self.all_feature_fusions_processors[layer]
-        self.split_feature_processors = self.all_split_feature_processors[layer]
+        # self.split_feature_processors = self.all_split_feature_processors[layer]
         self.fusion_features_processors = self.all_fusion_feature_processors[layer]
         self.feature_processors = self.all_feature_processors[layer]
         self.metrics_processor = self.all_metrics_processor[layer]
@@ -953,7 +964,9 @@ class UnimodalModel():
         Xs= processed_data.get("Xs")
 
         for fusion_features_processor in self.fusion_features_processors:
+            # type(fusion_features_processor) =  FeatureConcatenation
             if fusion_features_processor.executable(layer):
+                type(fusion_features_processor)
                 Xs = fusion_features_processor.excecute(Xs, layer)
 
         # 将融合的数据封装回去
@@ -961,24 +974,24 @@ class UnimodalModel():
 
         return data
 
-    def execute_predict_split_features_processors(self, data, layer):
-
-        if self.split_feature_processors is None or len(self.split_feature_processors) == 0:
-            return data
-
-        processed_data = data.get("SplitFeature", None)
-        if processed_data is None:
-            return data
-
-        # 获得原始数据 (经过特征筛选的数据)
-        Xs = processed_data.get("Xs")
-        for split_feature_processor in self.split_feature_processors:
-            if split_feature_processor.executable(layer):
-                Xs = split_feature_processor.excecute(Xs, layer)
-
-        data["SplitFeature"]["Xs"] = Xs
-
-        return data
+    # def execute_predict_split_features_processors(self, data, layer):
+    #
+    #     if self.split_feature_processors is None or len(self.split_feature_processors) == 0:
+    #         return data
+    #
+    #     processed_data = data.get("SplitFeature", None)
+    #     if processed_data is None:
+    #         return data
+    #
+    #     # 获得原始数据 (经过特征筛选的数据)
+    #     Xs = processed_data.get("Xs")
+    #     for split_feature_processor in self.split_feature_processors:
+    #         if split_feature_processor.executable(layer):
+    #             Xs = split_feature_processor.excecute(Xs, layer)
+    #
+    #     data["SplitFeature"]["Xs"] = Xs
+    #
+    #     return data
 
     def obtain_cascade_predict_classifier_instance(self, layer):
         return self.classifier_instances[layer]
@@ -1093,3 +1106,9 @@ class UnimodalModel():
 
     def set_metric_processor(self, new_feature_processors):
         self.metrics_processor = new_feature_processors
+
+    def execute_cluster(self, data):
+        cluster_executor = FeatureClusterExecutor(cluster_threshold=50, cv=5, scorer='accuracy', max_iter=1000)
+        data = cluster_executor(data)
+        return data
+
