@@ -5,12 +5,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE, SelectFromModel
 from sklearn.metrics import make_scorer, accuracy_score, f1_score
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.exceptions import ConvergenceWarning
+import warnings
+
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 # --------------------
 # Load the colon dataset
@@ -29,6 +31,7 @@ if len(unique_labels) == 2:
 else:
     raise ValueError("This example currently supports only binary classification.")
 
+
 # --------------------
 # Custom transformer for PLS to ensure pipeline compatibility
 # --------------------
@@ -45,6 +48,62 @@ class PLSExtractor(BaseEstimator, TransformerMixin):
         X_scores = self.pls.transform(X)
         return X_scores
 
+
+# --------------------
+# Simple GCN Extractor
+# This is a simplified GCN-like layer for initial testing.
+# In transform, we create an identity adjacency matrix matching the current X size.
+class GCNExtractor(BaseEstimator, TransformerMixin):
+    def __init__(self, n_components=20, random_state=42):
+        self.n_components = n_components
+        self.random_state = random_state
+
+    def _normalize_adjacency(self, A):
+        # Simple normalization: D^{-1/2} * A * D^{-1/2}
+        D = np.diag(np.sum(A, axis=1))
+        D_inv_sqrt = np.diag(1.0 / np.sqrt(np.diag(D)))
+        A_norm = D_inv_sqrt @ A @ D_inv_sqrt
+        return A_norm
+
+    def fit(self, X, y=None):
+        np.random.seed(self.random_state)
+        # Weight matrix W: (feature_dim, n_components)
+        self.W = np.random.randn(X.shape[1], self.n_components) * 0.01
+        return self
+
+    def transform(self, X):
+        # Create an identity adjacency for the current subset of X
+        A = np.eye(X.shape[0])
+        A_norm = self._normalize_adjacency(A)
+        # GCN step: X_gcn = ReLU(A_norm * X * W)
+        X_gcn = A_norm @ X @ self.W
+        X_gcn = np.maximum(X_gcn, 0)
+        return X_gcn
+
+
+# --------------------
+# GCLasso feature selector (placeholder)
+# --------------------
+class GCLassoSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, threshold='mean', random_state=42):
+        self.threshold = threshold
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        np.random.seed(self.random_state)
+        # Random coefficients for demonstration; replace with real GCLasso logic
+        self.coef_ = np.random.rand(X.shape[1]) - 0.5
+        return self
+
+    def transform(self, X):
+        if self.threshold == 'mean':
+            thresh = np.mean(np.abs(self.coef_))
+        else:
+            thresh = 0.0
+        mask = np.abs(self.coef_) > thresh
+        return X[:, mask]
+
+
 # Define metrics
 scoring = {
     'accuracy': make_scorer(accuracy_score),
@@ -55,21 +114,19 @@ scoring = {
 # Set up Cross-Validation
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-# Fix the final classifier as Logistic Regression (with default L2 penalty)
+# Final classifier
 final_classifier = LogisticRegression(solver='liblinear', random_state=42)
 
-# 1) PCA -> LR
+# Pipelines
 pca_lr_pipe = Pipeline([
     ('scaler', StandardScaler()),
     ('pca', PCA(n_components=20)),
     ('lr', final_classifier)
 ])
 
-# 2) Lasso (as feature selector) -> LR
-# 使用Lasso LogisticRegression作为特征选择器（SelectFromModel），然后用普通LR分类
 lasso_selector = SelectFromModel(
     LogisticRegression(penalty='l1', solver='liblinear', C=0.1, random_state=42),
-    prefit=False, threshold='mean' # 可以根据需要调整阈值策略
+    prefit=False, threshold='mean'
 )
 lasso_lr_pipe = Pipeline([
     ('scaler', StandardScaler()),
@@ -77,8 +134,6 @@ lasso_lr_pipe = Pipeline([
     ('lr', final_classifier)
 ])
 
-# 3) RFE -> LR
-# 使用LogisticRegression作为基础估计器进行RFE特征选择
 rfe_selector = RFE(estimator=LogisticRegression(penalty='l2', solver='liblinear', random_state=42),
                    n_features_to_select=50, step=100)
 rfe_lr_pipe = Pipeline([
@@ -87,16 +142,26 @@ rfe_lr_pipe = Pipeline([
     ('lr', final_classifier)
 ])
 
-# 4) PLS -> LR
 pls_lr_pipe = Pipeline([
     ('scaler', StandardScaler()),
     ('pls', PLSExtractor(n_components=5)),
     ('lr', final_classifier)
 ])
 
-# 5) No feature extraction (Baseline LR)
 baseline_lr_pipe = Pipeline([
     ('scaler', StandardScaler()),
+    ('lr', final_classifier)
+])
+
+gcn_lr_pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('gcn', GCNExtractor(n_components=20)),
+    ('lr', final_classifier)
+])
+
+gclasso_lr_pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('gclasso', GCLassoSelector(threshold='mean')),
     ('lr', final_classifier)
 ])
 
@@ -105,7 +170,9 @@ models = {
     'LassoSel+LR': lasso_lr_pipe,
     'RFE+LR': rfe_lr_pipe,
     'PLS+LR': pls_lr_pipe,
-    'Baseline LR': baseline_lr_pipe
+    'Baseline LR': baseline_lr_pipe,
+    'GCN+LR': gcn_lr_pipe,
+    'GCLasso+LR': gclasso_lr_pipe
 }
 
 results = {}
