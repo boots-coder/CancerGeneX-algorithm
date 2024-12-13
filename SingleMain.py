@@ -206,7 +206,27 @@ if __name__ == '__main__':
             model = UnimodalModel(config)
             model.fit(x_train, y_train, x_val, y_val)
 
-            # 使用测试集进行最终评估
+            # 使用测试集进行最终评估 0.76 ；
+            # 特征的区别和对比
+
+    #         lasso - [svm ]
+    #
+    #           28 - +;
+    #         data - 28 - 1
+    #     [f1 lasso gclasso graces] - [base classifier]
+    # []- zhohui , a 1 ;c b ;
+    #
+    #     julei 28 -
+    #     +28 , , , ,, , - you ; +
+    # ---
+    #     10 - 2 ; 11 - 3 ;  --
+    #     -- 78 =
+    #     68 88 -
+    #
+    #     2 3 - 5 +
+
+
+
 
             # y_pred = model.predict(x_test)
             y_pred_proba = model.predict_proba(x_test)

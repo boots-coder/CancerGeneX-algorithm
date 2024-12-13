@@ -1,8 +1,8 @@
-
 # Adap-BDCM - 代码整理
 
 This doc aim to review the code part of the paper Adam-BDCM
 
+<!--more-->
 
 ![image-20241031133547754](https://markdown-pictures-jhx.oss-cn-beijing.aliyuncs.com/picgo/image-20241031133547754.png)
 
@@ -483,6 +483,7 @@ model.fit(X_train, y_train, X_test, y_test)
 ## 特征选择的过程
 
 ```python
+
     # 执行特征选择
     def fit_excecute(self, f_select_ids, f_select_infos, layer):
         X_train, y_train = f_select_infos["X_train"], f_select_infos["y_train"]  # 获取训练数据
@@ -633,20 +634,76 @@ class FeatSelectorDispatcher(ListDispatcher):
 
 
 
+## 添加mac的 mps 进行训练
 
 
 
+问题： cpu占用率90以上， gpu 几乎为0 ；怀疑是不是代码的结构的问题
+
+训练集大小: 2784 , 维度: 24174
 
 
+
+## 一些问题
 
 //todo 
 
-提问：
+### 1 提问：
 
-1. 为什么没有第一层
+1. 为什么没有第一层 - 没有打印出来
 2. 为什么有平台
 
 ![image-20241031173058415](https://markdown-pictures-jhx.oss-cn-beijing.aliyuncs.com/picgo/image-20241031173058415.png)
 
+没有打印出来而已
 
 
+
+
+
+### 2 提问：
+
+我理解是，FeatFusionDispatcher得到一个对象， 然后调用了继承父类的obtain_instance方法，进一步调用了_obtain_instance 方法，应该是内部方法吧；然后调用了execute_dispatcher_method方法，但是父类的    def execute_dispatcher_method(self, name, est_type, configs):        pass； 为什么会执行到子类的   def execute_dispatcher_method(self, name, est_type, config):        return get_feature_concatenation_method(name, est_type, config) 呢？？？
+
+这是典型的面向对象编程（OOP）中的**多态**和**方法重写**机制在起作用。即便父类 `Dispatcher` 的 `execute_dispatcher_method` 是一个空实现（`pass`），但子类 `FeatFusionDispatcher` 对该方法进行了重写。当通过 `FeatFusionDispatcher` 的实例调用 `execute_dispatcher_method` 时，会自动调用子类中重写后的版本。
+
+具体原因如下：
+
+1. **类的继承与方法重写**：
+    `FeatFusionDispatcher` 类继承自 `Dispatcher` 类。
+    父类 `Dispatcher` 中有一个 `execute_dispatcher_method` 方法实现为 `pass`，相当于空实现。
+    子类 `FeatFusionDispatcher` 对该方法进行了重写（即重新定义了同名方法），这样子类就有了自己的实现逻辑。
+
+2. **实例方法调用的绑定**：
+    当你创建一个 `FeatFusionDispatcher` 的实例，例如：
+
+   ```python
+   feat_fusion_dispatcher = FeatFusionDispatcher()
+   ```
+
+   此实例是 `FeatFusionDispatcher` 类型的对象。即使 `FeatFusionDispatcher` 没有自己的 `obtain_instance` 方法实现，而是使用了父类 `Dispatcher` 提供的 `obtain_instance` 方法，这个实例仍然是 `FeatFusionDispatcher` 的实例，包含子类对方法的重写。
+
+3. **方法调用时的动态绑定**：
+    当你调用：
+
+   ```python
+   self.feature_fusions = feat_fusion_dispatcher.obtain_instance(fusion_configs)
+   ```
+
+   内部执行到 `_obtain_instance` 方法时（定义在 `Dispatcher` 中），最终会调用：
+
+   ```python
+   est = self.execute_dispatcher_method(name, est_type, config)
+   ```
+
+   此时的 `self` 是 `FeatFusionDispatcher` 的实例。Python 根据**方法解析顺序（MRO）**和多态特性，会从 `FeatFusionDispatcher` 中去找 `execute_dispatcher_method` 的定义。
+    因为 `FeatFusionDispatcher` 提供了自己的 `execute_dispatcher_method`，所以调用的就是子类的实现：
+
+   ```python
+   def execute_dispatcher_method(self, name, est_type, config):
+       return get_feature_concatenation_method(name, est_type, config)
+   ```
+
+   这就是为什么最终会执行到子类的 `execute_dispatcher_method` 而不是父类的空实现。
+
+总结来说：**你实例化的是子类，子类重写了父类方法，因此在运行时调用 `execute_dispatcher_method` 时，会自动使用子类的实现，而不是父类的空实现。**
