@@ -196,3 +196,78 @@ for name, metrics in results.items():
     print(f"\n{name}:")
     for m_name, value in metrics.items():
         print(f"  {m_name}: {value:.4f}")
+
+import numpy as np
+
+# 假设 results 已经包含各模型的评估结果
+# 我们在这里提取Accuracy最高的三个特征选择方法
+# 注：由于PLS、PCA、GCN不是严格的"特征选择"方法，仅RFE、LassoSel、GCLasso是真正选择原始特征的
+# 因此这里以Accuracy排名并同时确认是能选择特征的三种方法中选出前三
+
+# 首先在结果中筛选出能返回特征子集的方法
+subset_selection_methods = ['LassoSel+LR', 'RFE+LR', 'GCLasso+LR']
+
+# 从results中获取这些方法的accuracy
+method_accuracies = [(m, results[m]['Accuracy(mean)']) for m in subset_selection_methods]
+# 按accuracy排序
+method_accuracies.sort(key=lambda x: x[1], reverse=True)
+
+# 取前三（这里可能不足3个就全取）
+top_three = [m[0] for m in method_accuracies[:3]]
+
+print("Top three feature selection methods by accuracy:", top_three)
+
+# 对这三个模型重新在完整数据上fit以获得最终的特征选择情况
+# 为此，我们需要原先定义的pipeline对象（models字典中已存在）
+
+selected_features = {}
+for m in top_three:
+    pipeline = models[m]
+    pipeline.fit(X, y_bin)
+
+    # 根据不同方法提取特征选择步骤
+    if m == 'LassoSel+LR':
+        # LassoSel在pipeline中步骤名称是 'lasso_sel'
+        lasso_step = pipeline.named_steps['lasso_sel']
+        mask = lasso_step.get_support()
+        selected_features[m] = np.where(mask)[0]
+
+    elif m == 'RFE+LR':
+        # RFE在pipeline中步骤名称是 'rfe'
+        rfe_step = pipeline.named_steps['rfe']
+        mask = rfe_step.support_
+        selected_features[m] = np.where(mask)[0]
+
+    elif m == 'GCLasso+LR':
+        # GCLasso是一个自定义类，需要根据fit后的coef_计算mask
+        gclasso_step = pipeline.named_steps['gclasso']
+        coef_ = gclasso_step.coef_
+        if gclasso_step.threshold == 'mean':
+            thresh = np.mean(np.abs(coef_))
+        else:
+            thresh = 0.0
+        mask = np.abs(coef_) > thresh
+        selected_features[m] = np.where(mask)[0]
+
+# 打印每个特征选择方法选出的特征索引
+for m in top_three:
+    print(f"\n{m} selected features:")
+    print(selected_features[m])
+
+# 计算三个方法特征的重复率（交集）
+if len(top_three) == 3:
+    set_a = set(selected_features[top_three[0]])
+    set_b = set(selected_features[top_three[1]])
+    set_c = set(selected_features[top_three[2]])
+
+    intersection = set_a.intersection(set_b).intersection(set_c)
+    union_all = set_a.union(set_b).union(set_c)
+
+    print("\nIntersection of top three methods' selected features:", intersection)
+    print("Number of features in intersection:", len(intersection))
+    print("Number of features in union:", len(union_all))
+    if len(union_all) > 0:
+        repeat_rate = len(intersection) / len(union_all)
+        print("Feature repetition rate (intersection/union):", repeat_rate)
+    else:
+        print("No features selected among these methods (union is empty).")
