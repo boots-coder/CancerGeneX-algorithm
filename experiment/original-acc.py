@@ -1,9 +1,7 @@
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
-# 层数（Iteration）
+# Data
 layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-# 对应的精度值
 accuracy = [
     0.8175287356321839,
     0.8577586206896551,
@@ -17,20 +15,36 @@ accuracy = [
     0.8419540229885057
 ]
 
-# 绘制折线图
-plt.figure(figsize=(8, 6))
-plt.plot(layers, accuracy, marker='o', color='b', label='Accuracy')
+# Bar chart with holiday theme
+fig = go.Figure(
+    data=[
+        go.Bar(
+            x=layers,
+            y=accuracy,
+            marker=dict(
+                color=['#FF0000', '#00FF00', '#FF4500', '#FFD700', '#228B22',
+                       '#FF69B4', '#8A2BE2', '#5F9EA0', '#DC143C', '#008B8B'],
+                line=dict(color='black', width=1)
+            ),
+            text=[f"{acc:.2%}" for acc in accuracy],  # Display accuracy as percentages
+            textposition='outside',
+            name='Accuracy'
+        )
+    ]
+)
 
-# 添加标题和标签
-plt.title('Accuracy per Layer')
-plt.xlabel('Layer')
-plt.ylabel('Accuracy')
+# Layout customization
+fig.update_layout(
+    title="🎄 Holiday-Themed Accuracy per Layer 🎁",
+    title_font=dict(size=24, color='darkgreen'),
+    xaxis=dict(title="Layer", title_font=dict(size=18)),
+    yaxis=dict(title="Accuracy", title_font=dict(size=18)),
+    plot_bgcolor='#FFFACD',  # Background color
+    paper_bgcolor='#FFFACD',  # Outer background
+    font=dict(family="Arial", size=14),
+    showlegend=False
+)
 
-# 显示网格
-plt.grid(True)
-
-# 显示图例
-plt.legend()
-
-# 展示图形
-plt.show()
+# Save as HTML file
+fig.write_html("holiday_chart.html")
+print("Chart saved as 'holiday_chart.html'. You can upload this file to share it online.")
