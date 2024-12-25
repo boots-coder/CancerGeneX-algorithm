@@ -171,7 +171,7 @@ class TransformerWrapper(ModelWrapper):
             return x + self.pe[:, :x.size(1)]
 
     class TransformerNet(nn.Module):
-        def __init__(self, InputSize, ClassNum, nhead=4, num_layers=2, dim_feedforward=128):
+        def __init__(self, InputSize, ClassNum, nhead=8, num_layers=16, dim_feedforward=256):
             super(TransformerWrapper.TransformerNet, self).__init__()
 
             self.model_dim = 64  # 将输入转换到这个维度

@@ -131,7 +131,7 @@ if __name__ == '__main__':
                 }
             },
 
-            "BNN": {
+            "Transformer": {
                 "Layers": None,
                 "Builder": "DL",
                 "DataType": ["Global", "Local"],
@@ -140,7 +140,7 @@ if __name__ == '__main__':
                     "Parameter": {}
                 },
                 "Model": {
-                    "name": "BNN",
+                    "name": "Transformer",
                     "Parameter": {"ClassNum": 2}
                 },
                 "LossFun": {
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     print(results_df.to_string(index=False))
 
     # 保存结果到CSV文件
-    results_df.to_csv('classification_results.csv', index=False)
+    results_df.to_csv('transformer-classification_results.csv', index=False)
     print("\nResults have been saved to 'classification_results.csv'")
 
     # 打印每个数据集的详细统计信息
@@ -309,5 +309,5 @@ if __name__ == '__main__':
         numeric_results_list.append(numeric_results)
 
     numeric_results_df = pd.DataFrame(numeric_results_list)
-    numeric_results_df.to_csv('classification_results_numeric.csv', index=False)
-    print("\nNumeric results have been saved to 'classification_results_numeric.csv'")
+    numeric_results_df.to_csv('transformer-classification_results_numeric.csv', index=False)
+    print("\ntransformer-Numeric results have been saved to 'classification_results_numeric.csv'")
