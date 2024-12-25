@@ -12,6 +12,8 @@ def get_dl_model(name, kwargs):
         return BNNWrapper(name, kwargs)
     if name == "Transformer":
         return TransformerWrapper(name, kwargs)
+    if name == "HybridNet":
+        return HybridWrapper(name, kwargs)
     else:
         raise ValueError(f"Unsupported model name: {name}")
 
@@ -250,3 +252,124 @@ class TransformerWrapper(ModelWrapper):
             except RuntimeError as e:
                 print(f"Error in forward pass. Input shape: {x.shape}, Model dim: {self.model_dim}")
                 raise e
+
+
+class HybridWrapper(ModelWrapper):
+    def __init__(self, name, kwargs):
+        super(HybridWrapper, self).__init__(name, HybridWrapper.HybridNet, kwargs)
+        input_size = kwargs['Parameter']['InputSize']
+        ClassNum = kwargs['Parameter']['ClassNum']
+
+        # 动态调整Transformer参数
+        nhead = max(8, min(16, input_size // 64))
+        num_layers = max(4, min(8, input_size // 128))  # 减少层数以平衡计算量
+        dim_feedforward = max(128, min(256, input_size))  # 适当减小前馈网络维度
+
+        self.model = HybridWrapper.HybridNet(
+            InputSize=input_size,
+            ClassNum=ClassNum,
+            nhead=nhead,
+            num_layers=num_layers,
+            dim_feedforward=dim_feedforward
+        )
+        self.model.to(self.device)
+
+    def to(self, device):
+        self.model = self.model.to(device)
+        self.device = device
+        return self
+
+    class HybridNet(nn.Module):
+        def __init__(self, InputSize, ClassNum, nhead=8, num_layers=4, dim_feedforward=128):
+            super(HybridWrapper.HybridNet, self).__init__()
+
+            # BNN分支参数
+            self.bnn_hidden = 32
+
+            # Transformer分支参数
+            self.model_dim = max(64, min(128, (InputSize // 4) // nhead * nhead))
+
+            # BNN分支
+            self.bnn_branch = nn.ModuleDict({
+                'dense_1': nn.Linear(InputSize, self.bnn_hidden, bias=False),
+                'dense_2': nn.Linear(InputSize, self.bnn_hidden, bias=False),
+                'dense_3': nn.Linear(InputSize, self.bnn_hidden, bias=False),
+                'batchnorm': nn.BatchNorm1d(self.bnn_hidden),
+                'relu_1': nn.ReLU(),
+                'relu_2': nn.ReLU(),
+                'sigmoid': nn.Sigmoid()
+            })
+
+            # Transformer分支
+            self.transformer_branch = nn.ModuleDict({
+                'input_projection': nn.Sequential(
+                    nn.Linear(InputSize, self.model_dim),
+                    nn.LayerNorm(self.model_dim)
+                ),
+                'pos_encoder': HybridWrapper.PositionalEncoding(self.model_dim),
+                'encoder_layers': nn.ModuleList([
+                    nn.TransformerEncoderLayer(
+                        d_model=self.model_dim,
+                        nhead=nhead,
+                        dim_feedforward=dim_feedforward,
+                        batch_first=True,
+                        dropout=0.1
+                    ) for _ in range(num_layers)
+                ]),
+                'attention_pool': HybridWrapper.AttentionPooling(self.model_dim)
+            })
+
+            # 特征融合层
+            self.fusion_layer = nn.Sequential(
+                nn.Linear(self.bnn_hidden + self.model_dim, 64),
+                nn.LayerNorm(64),
+                nn.ReLU(),
+                nn.Dropout(0.1)
+            )
+
+            # 输出层
+            self.feature_layer = nn.Linear(64, 32)
+            self.classifier = nn.Linear(32, ClassNum)
+            self.softmax = nn.Softmax(dim=1)
+
+            self.device = torch.device('cuda' if torch.cuda.is_available() else 'mps')
+
+        def forward(self, x):
+            x = x.to(self.device)
+
+            # BNN分支处理
+            f1 = self.bnn_branch['dense_1'](x)
+            f1 = self.bnn_branch['batchnorm'](f1)
+            f1 = self.bnn_branch['relu_1'](f1)
+
+            f2 = self.bnn_branch['dense_2'](x)
+            f2 = self.bnn_branch['batchnorm'](f2)
+            f2 = self.bnn_branch['relu_2'](f2)
+
+            f2_sig = self.bnn_branch['dense_3'](x)
+            f2_sig = self.bnn_branch['batchnorm'](f2_sig)
+            f2_sig = self.bnn_branch['sigmoid'](f2_sig)
+
+            f2 = torch.mul(f2, f2_sig)
+            bnn_feature = torch.mul(f1, f2)
+
+            # Transformer分支处理
+            trans_x = x.unsqueeze(1)  # 添加序列维度
+            trans_x = self.transformer_branch['input_projection'](trans_x)
+            trans_x = self.transformer_branch['pos_encoder'](trans_x)
+
+            for encoder_layer in self.transformer_branch['encoder_layers']:
+                trans_x = encoder_layer(trans_x)
+
+            transformer_feature = self.transformer_branch['attention_pool'](trans_x)
+
+            # 特征融合
+            combined_feature = torch.cat([bnn_feature, transformer_feature], dim=1)
+            fused_feature = self.fusion_layer(combined_feature)
+
+            # 输出处理
+            feature = self.feature_layer(fused_feature)
+            out = self.classifier(feature)
+            out = self.softmax(out)
+
+            return feature, out

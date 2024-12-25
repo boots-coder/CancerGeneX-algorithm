@@ -27,18 +27,40 @@ if __name__ == '__main__':
             },
         },
 #卡方检验用不了
+        # "FeatureSelector": {
+        #     "GCLasso": {
+        #         "Type": "FeatureSelection",
+        #         "Method": "GCLasso",
+        #         "Parameter": {},
+        #     },
+        #     "RecallAttribute": {
+        #         "name": "RecallAttribute",
+        #         "Type": "RecallAttribute",
+        #         "Method": "RecallAttribute",
+        #         "Parameter": {0.1},
+        #     },
+        # },
         "FeatureSelector": {
-            "GCLasso": {
-                "Type": "FeatureSelection",
-                "Method": "GCLasso",
-                "Parameter": {},
-            },
-            "RecallAttribute": {
-                "name": "RecallAttribute",
-                "Type": "RecallAttribute",
-                "Method": "RecallAttribute",
-                "Parameter": {0.1},
-            },
+    "GCLasso": {
+        "Type": "FeatureSelection",
+        "Method": "GCLasso",
+        "Parameter": {},
+    },
+    "RecallAttribute": {
+        "name": "SelectorBasedRecall",
+        "Type": "RecallAttribute",
+        "Method": "SelectorBasedRecall",
+        "Parameter": {
+            "MutualInfoPercentile": 10,     # 选择互信息最高的10%
+            "VarianceThreshold": 0.1,       # 方差阈值
+            "RFImportancePercentile": 10    # 选择重要性最高的10%
+        },
+    },
+},
+        "CategoryImbalance": {
+            "Name" : "RandomOverSampler",
+            "Type" : "CategoryImbalance",
+            "Parameter": {},
         },
 
         "FeatureFusion": {
@@ -186,7 +208,7 @@ if __name__ == '__main__':
 
     # 测试仅GLI_85数据集举例
     datasets = {
-        "Prostate_GE": "data/Prostate_GE.mat"
+        "SMK_CAN_187.mat": "data/SMK_CAN_187.mat"
     }
 
     for name, file_path in datasets.items():

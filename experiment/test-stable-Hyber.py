@@ -37,11 +37,6 @@ if __name__ == '__main__':
                 "FeaturesType": []
             },
         },
-        # "CategoryImbalance": {
-        #     "Name": "RandomOverSampler",
-        #     "Type": "CategoryImbalance",
-        #     "Parameter": {},
-        # },
 
         "FeatureSelector": {
             "GCLasso": {
@@ -149,7 +144,7 @@ if __name__ == '__main__':
                 }
             },
 
-            "Transformer": {
+            "HybridNet": {
                 "Layers": None,
                 "Builder": "DL",
                 "DataType": ["Global", "Local"],
@@ -158,7 +153,7 @@ if __name__ == '__main__':
                     "Parameter": {}
                 },
                 "Model": {
-                    "name": "Transformer",
+                    "name": "HybridNet",
                     "Parameter": {"ClassNum": 2}
                 },
                 "LossFun": {
@@ -197,7 +192,7 @@ if __name__ == '__main__':
     ]
 
     data_dir = "../data/"
-    n_runs = 5
+    n_runs = 10
 
     # 修改为普通的Python列表
     random_states = list(range(RANDOM_SEED, RANDOM_SEED + n_runs))
@@ -288,7 +283,7 @@ if __name__ == '__main__':
     results_df = pd.DataFrame(results_list)
     print("\nResults Table:")
     print(results_df.to_string(index=False))
-    results_df.to_csv('TR-classification_results.csv', index=False)
+    results_df.to_csv('classification_results.csv', index=False)
     print("\nResults have been saved to 'classification_results.csv'")
 
     # 创建数值格式的结果DataFrame
@@ -310,7 +305,7 @@ if __name__ == '__main__':
         numeric_results_list.append(numeric_results)
 
     numeric_results_df = pd.DataFrame(numeric_results_list)
-    numeric_results_df.to_csv('-TR-classification_results_numeric.csv', index=False)
+    numeric_results_df.to_csv('classification_results_numeric.csv', index=False)
     print("\nNumeric results have been saved to 'classification_results_numeric.csv'")
 
     # 打印每个数据集的详细统计信息

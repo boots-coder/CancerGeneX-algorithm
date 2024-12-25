@@ -131,13 +131,46 @@ class UnimodalModel():
         else:
             self.feature_processors = []
 
+    # def _init_cascade_metrics_processor(self, config):
+    #     metrics_processor_configs = config.get("MetricsProcessors", None)
+    #     if metrics_processor_configs is not None:
+    #         metric_processor_dispatcher = MetricProcessorDispatcher()
+    #         self.metrics_processor = metric_processor_dispatcher.obtain_instance(metrics_processor_configs)
+    #     else:
+    #         raise "计算每层的指标不能设置为空"
     def _init_cascade_metrics_processor(self, config):
         metrics_processor_configs = config.get("MetricsProcessors", None)
         if metrics_processor_configs is not None:
             metric_processor_dispatcher = MetricProcessorDispatcher()
             self.metrics_processor = metric_processor_dispatcher.obtain_instance(metrics_processor_configs)
         else:
-            raise "计算每层的指标不能设置为空"
+            # 使用默认的 AUC 计算器
+            from sklearn.metrics import roc_auc_score
+
+            class AUCMetricProcessor:
+                def obtain_name(self):
+                    return "AUCMetricProcessor"
+
+                def fit_excecute(self, data, layer):
+                    y_true = data['Original']['y_val']
+                    latest_layer = max(data['Finfos'].keys())
+                    layer_finfos = data['Finfos'][latest_layer]
+
+                    # 收集分类器概率
+                    all_probs = [
+                        info['Probs'] for info in layer_finfos.values() if info['Probs'] is not None
+                    ]
+
+                    if not all_probs:
+                        return 0.0
+
+                    y_pred = np.mean(all_probs, axis=0)
+                    if y_pred.shape[1] > 1:
+                        y_pred = y_pred[:, 1]  # 取正类概率
+
+                    return roc_auc_score(y_true, y_pred)
+
+            self.metrics_processor = AUCMetricProcessor()
 
     def _init_post_processor(self, config):
         post_processors_configs = config.get("PostProcessors", None)
@@ -238,7 +271,117 @@ class UnimodalModel():
         self.execute_after_fit(data)
         end_time = time.time()
         print("花费的时间:", end_time - start_time)
+    # def _fit(self, X_train, y_train, X_val, y_val):
+    #     start_time = time.time()
+    #
+    #     # 执行循环前的一些操作（预处理和数据封装）
+    #     data = self.execute_before_fit(X_train, y_train, X_val, y_val)
+    #     data = self.execute_pre_fit_processor(data)
+    #
+    #     # 执行聚类方法，筛选代表性特征
+    #     # data = self.execute_cluster(data)
+    #
+    #     # 开始级联迭代
+    #     for layer in range(1, self.max_num_iterations + 1):
+    #         # 准备第layer层的数据与信息
+    #         data = self.pre_fit_cascade_data_and_infos(data, layer)
+    #
+    #         # 特征选择器执行
+    #         fselect_ids, fselect_infos = self.execute_feature_selector_processors(data, layer)
+    #
+    #         # 特征选择后数据处理
+    #         data = self.execute_fit_feature_selection(data, fselect_ids)
+    #         self.save_f_select_ids(fselect_ids, layer)
+    #
+    #         # 特征融合
+    #         data = self.execute_feature_and_data_fit_fusion(data, layer)
+    #
+    #         # 特征划分（如果使用局部特征）
+    #         data = self.split_fit_data_to_local(data, layer)
+    #
+    #         # 融合特征后处理
+    #         data = self.execute_fit_fusion_features_processors(data, layer)
+    #
+    #         # 类别不平衡处理
+    #         data = self.execute_category_imbalance(data, layer)
+    #
+    #         # 构建分类器
+    #         builder_configs = self.obtain_new_update_builder_configs(data, layer)
+    #         classifier_instances = self.execute_cascade_fit_classifier(data, builder_configs, layer)
+    #
+    #         # 提取特征和概率信息
+    #         all_finfos = self.obtain_relevant_fit_to_data(data, classifier_instances, layer)
+    #
+    #         # 对提取的特征进行处理
+    #         all_finfos = self.execute_fit_feature_processors(all_finfos, layer)
+    #
+    #         # 保存特征信息
+    #         self.save_relevant_fit_to_data(all_finfos, data, layer)
+    #
+    #         # 调整分类器（可选）
+    #         classifier_instances, data = self.adjust_cascade_classifier(classifier_instances, data)
+    #         self.save_cascade_classifier(classifier_instances, layer)
+    #
+    #         # 计算当前层指标
+    #         metric = self.obtain_current_metric(data, layer)
+    #
+    #         # 后置处理器
+    #         data = self.execute_post_fit_processor(data, layer)
+    #         data = self.post_fit_cascade_data_and_infos(data, layer)
+    #
+    #         # 根据指标判断是否停止
+    #         if layer == 1:
+    #             count = 0
+    #             best_level, best_metric = layer, metric
+    #             best_metric_processors = self.metrics_processor
+    #             print(f"第 {layer} 层的 AUC:", metric)
+    #         else:
+    #             print(f"第 {layer} 层的 AUC:", metric)
+    #             if metric > best_metric:
+    #                 count = 0
+    #                 best_level, best_metric = layer, metric
+    #                 best_metric_processors = self.metrics_processor
+    #             else:
+    #                 count += 1
+    #
+    #         if count >= self.termination_layer or layer == self.max_num_iterations:
+    #             print(f"模型的最佳层数 = {best_level}, 最佳 AUC = {best_metric}")
+    #             self.best_level = best_level
+    #             self.best_metric_processors = best_metric_processors
+    #             break
+    #
+    #     self.execute_after_fit(data)
+    #     end_time = time.time()
+    #     print("花费的时间:", end_time - start_time)
 
+    def calculate_auc(self, data):
+        """计算验证集的AUC值"""
+        try:
+            y_true = data['Original']['y_val']
+            # 获取最新的预测概率
+            latest_layer = max(data['Finfos'].keys())
+            layer_finfos = data['Finfos'][latest_layer]
+
+            # 收集所有分类器的概率
+            all_probs = []
+            for classifier_info in layer_finfos.values():
+                if classifier_info['Probs'] is not None:
+                    all_probs.append(classifier_info['Probs'])
+
+            if not all_probs:
+                return 0.0
+
+            # 平均所有分类器的概率
+            y_pred = np.mean(all_probs, axis=0)
+            if len(y_pred.shape) > 1 and y_pred.shape[1] > 1:
+                y_pred = y_pred[:, 1]  # 获取正类的概率
+
+            from sklearn.metrics import roc_auc_score
+            return roc_auc_score(y_true, y_pred)
+
+        except Exception as e:
+            print(f"计算AUC时出错: {str(e)}")
+            return 0.0
     # ------------------------- 训练流程子方法 -------------------------
     def execute_before_fit(self, X_train, y_train, X_val, y_val):
         if self.debug:
