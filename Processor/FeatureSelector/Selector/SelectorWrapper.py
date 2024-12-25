@@ -101,8 +101,15 @@ class SelectorWrapper(FeatureSelectorTemplate):
         self._fit(X, y)  # 拟合模型
 
     # 判断是否需要执行fit
+    # def fit_executable(self, layer):
+    #     return True
+    #
+
     def fit_executable(self, layer):
-        return True
+        if layer == 1:
+            return True
+        else:
+            return False
 
     # 执行特征选择
     def fit_excecute(self, f_select_ids, f_select_infos, layer):
