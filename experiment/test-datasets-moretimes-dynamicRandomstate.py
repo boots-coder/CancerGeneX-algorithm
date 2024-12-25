@@ -1,313 +1,196 @@
-#!/usr/bin/env python
-# coding=utf-8
-from sklearn.model_selection import train_test_split
-from Model import UnimodalModel
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+import scipy.io as sio
 import numpy as np
-import pandas as pd
-from sklearn.decomposition import PCA
-import scipy.io
 import os
-
-if __name__ == '__main__':
-    class_num = 2
-    config = {
-        "ClassNum": class_num,  # 注意这个参数一定要改
-        "Metric": "acc",
-        "DataType": {"Global"},
-
-        "PreProcessors": {
-            "Zscore": {
-                "Type": "Standardization",
-                "Method": "Zscore",
-                "BuilderType": ["DL"],
-                "FeaturesType": []
-            },
-        },
-
-        "FeatureSelector": {
-            "GCLasso": {
-                "Type": "FeatureSelection",
-                "Method": "GCLasso",
-                "Parameter": {},
-            },
-            "RecallAttribute": {
-                "name": "RecallAttribute",
-                "Type": "RecallAttribute",
-                "Method": "RecallAttribute",
-                "Parameter": {0.1},
-            },
-        },
-
-        "FeatureFusion": {
-            "Name": "FeatureFusion",
-            "BuilderType": ["ML", "DL"],
-            "Type": "FeatureConcatenation",
-        },
-
-        "FeatureProcessors": {
-            "0": {
-                "Type": "Standardization",
-                "Method": "DecimalScale",
-                "BuilderType": ["DL"],
-                "FeaturesType": []
-            },
-        },
-
-        "MetricsProcessors": {
-            "Name": "MetricsProcessor",
-            "BuilderType": ["ML", "DL"],
-            "Type": "AvgMetricProcessor",
-            "ClassifierMethod": "acc",
-        },
-
-        "CascadeClassifier": {
-            "AdaptiveEnsembleClassifyByNum": {
-                "AdaptiveMethod": "retained_num",
-                "CaluateMetric": "acc",
-                "Builder": "ML",
-                "Type": "AdaptiveEnsembleClassifyByNum",
-                "DataType": ["Global", "Local"],
-                "BaseClassifier": {
-                    "RandomForestClassifier": {
-                        "Layer": [2, 3],
-                        "Type": "RandomForestClassifier",
-                        "Parameter": {"n_estimators": 100, "criterion": "gini",
-                                      "class_weight": None, "random_state": 0},
-                    },
-                    "ExtraTreesClassifier": {
-                        "Type": "ExtraTreesClassifier",
-                        "Parameter": {"n_estimators": 100, "criterion": "gini",
-                                      "class_weight": None, "random_state": 0},
-                    },
-                    "GaussianNBClassifier": {
-                        "Type": "GaussianNBClassifier",
-                        "Parameter": {}
-                    },
-                    "BernoulliNBClassifier": {
-                        "Type": "BernoulliNBClassifier",
-                        "Parameter": {}
-                    },
-                    "KNeighborsClassifier_1": {
-                        "Type": "KNeighborsClassifier",
-                        "Parameter": {"n_neighbors": 2}
-                    },
-                    "KNeighborsClassifier_2": {
-                        "Type": "KNeighborsClassifier",
-                        "Parameter": {"n_neighbors": 3}
-                    },
-                    "KNeighborsClassifier_3": {
-                        "Type": "KNeighborsClassifier",
-                        "Parameter": {"n_neighbors": 5}
-                    },
-                    "GradientBoostingClassifier": {
-                        "Type": "GradientBoostingClassifier",
-                        "Parameter": {}
-                    },
-                    "SVCClassifier_1": {
-                        "Type": "SVCClassifier",
-                        "Parameter": {"kernel": "linear", "probability": True}
-                    },
-                    "SVCClassifier_2": {
-                        "Type": "SVCClassifier",
-                        "Parameter": {"kernel": "rbf", "probability": True}
-                    },
-                    "SVCClassifier_3": {
-                        "Type": "SVCClassifier",
-                        "Parameter": {"kernel": "sigmoid", "probability": True}
-                    },
-                    "LogisticRegressionClassifier_1": {
-                        "Type": "LogisticRegressionClassifier",
-                        "Parameter": {"penalty": 'l2'}
-                    },
-                    "LogisticRegressionClassifier_2": {
-                        "Type": "LogisticRegressionClassifier",
-                        "Parameter": {"C": 1, "penalty": 'l1', "solver": 'liblinear'}
-                    },
-                    "LogisticRegressionClassifier_3": {
-                        "Type": "LogisticRegressionClassifier",
-                        "Parameter": {"penalty": None}
-                    },
-                }
-            },
-
-            "BNN": {
-                "Layers": None,
-                "Builder": "DL",
-                "DataType": ["Global", "Local"],
-                "Trainer": {
-                    "name": "TrainerWrapper",
-                    "Parameter": {}
-                },
-                "Model": {
-                    "name": "BNN",
-                    "Parameter": {"ClassNum": 2}
-                },
-                "LossFun": {
-                    "name": "CrossEntropyLoss",
-                    "Parameter": {}
-                },
-                "Optimizer": {
-                    "name": "Adam",
-                    "Parameter": {"lr": 0.001},
-                }
-            }
-        },
-    }
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib import font_manager
+import pandas as pd
 
 
-    def load_data_from_mat(file_path):
-        """
-        Load dataset from .mat file, extract features (X) and labels (Y).
-        """
-        mat_data = scipy.io.loadmat(file_path)
-
-        # Extract features and labels
-        X = mat_data['X']  # Assuming the feature matrix is stored under the key 'X'
-        Y = mat_data['Y'].flatten()  # Assuming the labels are stored under the key 'Y'
-
-        # Convert labels to 0, 1
-        if -1 in Y:  # Convert -1 to 0
-            Y[Y == -1] = 0
-        elif 2 in Y:  # Convert 2 to 0 for {1, 2} labels
-            Y[Y == 2] = 0
-
-        return X, Y
+# 设置中文字体
+def set_chinese_font():
+    """设置中文字体"""
+    try:
+        # Mac系统
+        plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']
+    except:
+        try:
+            # Windows系统
+            plt.rcParams['font.sans-serif'] = ['SimHei']
+        except:
+            print("警告：未能找到合适的中文字体，可能会导致中文显示异常")
+    plt.rcParams['axes.unicode_minus'] = False
 
 
-    # 数据集列表
-    datasets = [
-        "ALLAML.mat", "colon.mat", "GLI_85.mat",
-        "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
-    ]
+def load_and_analyze_data(file_path):
+    """
+    加载并分析.mat文件数据
+    返回：数据矩阵、标签、唯一标签值、每个标签的数量
+    """
+    try:
+        # 加载数据
+        data = sio.loadmat(file_path)
 
+        # 提取数据和标签
+        X = data['X'] if 'X' in data else None
+        Y = data['Y'] if 'Y' in data else None
+
+        if X is None or Y is None:
+            print(f"数据格式错误，可用的键：{data.keys()}")
+            return None, None, None, None
+
+        # 基本信息
+        n_samples, n_features = X.shape
+        unique_labels, label_counts = np.unique(Y, return_counts=True)
+
+        # 打印基本信息
+        print(f"\n数据集: {os.path.basename(file_path)}")
+        print(f"样本总数: {n_samples}")
+        print(f"特征维度: {n_features}")
+        print("\n类别分布:")
+        for label, count in zip(unique_labels.flatten(), label_counts):
+            percentage = count / n_samples * 100
+            print(f"类别 {label}: {count} 样本 ({percentage:.2f}%)")
+
+        return X, Y, unique_labels, label_counts
+
+    except Exception as e:
+        print(f"加载数据时出错: {str(e)}")
+        return None, None, None, None
+
+
+def create_dataset_summary_table(datasets_info, feature_stats):
+    """创建数据集汇总表"""
+    data = []
+    for dataset_name, (labels, counts) in datasets_info.items():
+        stats = feature_stats[dataset_name]
+        row = {
+            '数据集': dataset_name.replace('.mat', ''),
+            '样本数': sum(counts),
+            '特征数': stats['n_features'],
+            '类别数': len(counts),
+            '类别分布': ' : '.join(map(str, counts)),
+            '特征均值': f"{stats['mean']:.3f}",
+            '特征标准差': f"{stats['std']:.3f}"
+        }
+        data.append(row)
+    return pd.DataFrame(data)
+
+
+def plot_sample_feature_distribution(datasets_info, feature_stats):
+    """绘制样本数量和特征维度分布图"""
+    set_chinese_font()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+    # 准备数据
+    names = [name.replace('.mat', '') for name in datasets_info.keys()]
+    samples = [sum(counts) for _, (_, counts) in datasets_info.items()]
+    features = [stats['n_features'] for stats in feature_stats.values()]
+
+    # 样本数量条形图
+    bars1 = ax1.bar(names, samples, color='#2ecc71', alpha=0.8)
+    ax1.set_title('各数据集样本数量分布')
+    ax1.set_xlabel('数据集')
+    ax1.set_ylabel('样本数量')
+    ax1.tick_params(axis='x', rotation=45)
+
+    # 添加数值标签
+    for bar in bars1:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width() / 2., height,
+                 f'{int(height)}',
+                 ha='center', va='bottom')
+
+    # 特征维度条形图
+    bars2 = ax2.bar(names, features, color='#3498db', alpha=0.8)
+    ax2.set_title('各数据集特征维度分布')
+    ax2.set_xlabel('数据集')
+    ax2.set_ylabel('特征维度')
+    ax2.tick_params(axis='x', rotation=45)
+
+    # 添加数值标签
+    for bar in bars2:
+        height = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width() / 2., height,
+                 f'{int(height)}',
+                 ha='center', va='bottom')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_class_distribution(datasets_info):
+    """绘制类别分布图"""
+    set_chinese_font()
+    n_datasets = len(datasets_info)
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    axes = axes.ravel()
+
+    colors = plt.cm.Set3(np.linspace(0, 1, 10))
+
+    for i, (dataset_name, (labels, counts)) in enumerate(datasets_info.items()):
+        ax = axes[i]
+
+        # 绘制饼图
+        wedges, texts, autotexts = ax.pie(counts,
+                                          labels=[f'类别 {int(label)}' for label in labels.flatten()],
+                                          autopct='%1.1f%%',
+                                          colors=colors[:len(counts)])
+
+        ax.set_title(dataset_name.replace('.mat', ''))
+
+    # 删除多余的子图
+    if n_datasets < 6:
+        for i in range(n_datasets, 6):
+            fig.delaxes(axes[i])
+
+    plt.tight_layout()
+    plt.show()
+
+
+def main():
+    """主函数"""
     # 数据路径
-    data_dir = "../data/"  # 根据实际情况修改
+    base_path = "/Users/bootscoder/Documents/岳老师-科研/贾浩轩-Adap-BDCM/paper2/Adap-BDCM-main/data"
+    datasets = ["ALLAML.mat", "colon.mat", "GLI_85.mat",
+                "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"]
 
-    # 重复实验次数
-    n_runs = 10
+    datasets_info = {}
+    feature_stats = {}
 
-    # 用字典存储各个指标的结果
-    metrics_results = {
-        'accuracy': {ds: [] for ds in datasets},
-        'precision': {ds: [] for ds in datasets},
-        'recall': {ds: [] for ds in datasets},
-        'f1': {ds: [] for ds in datasets},
-        'auc': {ds: [] for ds in datasets}
-    }
-
-    for run_idx in range(n_runs):
-        print(f"\n===== Run {run_idx + 1}/{n_runs} =====")
-        for dataset in datasets:
-            file_path = os.path.join(data_dir, dataset)
-            try:
-                # 加载数据集
-                X, Y = load_data_from_mat(file_path)
-
-                # 数据划分
-                x_train_val, x_test, y_train_val, y_test = train_test_split(
-                    X, Y, test_size=0.3, random_state=42 + run_idx, stratify=Y
-                )
-
-                x_train, x_val, y_train, y_val = train_test_split(
-                    x_train_val, y_train_val, test_size=(50 / 70),
-                    random_state=42 + run_idx, stratify=y_train_val
-                )
-
-                # 初始化并训练模型
-                model = UnimodalModel(config)
-                model.fit(x_train, y_train, x_val, y_val)
-
-                # 获取预测概率和类别
-                y_pred_proba = model.predict_proba(x_test)
-                if len(y_pred_proba.shape) == 1 or y_pred_proba.shape[1] == 1:
-                    y_pred_proba = y_pred_proba.flatten()
-                else:
-                    y_pred_proba = y_pred_proba[:, 1]
-
-                # 获取预测类别
-                y_pred = (y_pred_proba > 0.5).astype(int)
-
-                # 计算各项指标
-                metrics_results['accuracy'][dataset].append(accuracy_score(y_test, y_pred))
-                metrics_results['precision'][dataset].append(precision_score(y_test, y_pred))
-                metrics_results['recall'][dataset].append(recall_score(y_test, y_pred))
-                metrics_results['f1'][dataset].append(f1_score(y_test, y_pred))
-                metrics_results['auc'][dataset].append(roc_auc_score(y_test, y_pred_proba))
-
-                print(f"{dataset} - Run {run_idx + 1}:")
-                print(f"Accuracy: {metrics_results['accuracy'][dataset][-1]:.4f}")
-                print(f"Precision: {metrics_results['precision'][dataset][-1]:.4f}")
-                print(f"Recall: {metrics_results['recall'][dataset][-1]:.4f}")
-                print(f"F1: {metrics_results['f1'][dataset][-1]:.4f}")
-                print(f"AUC: {metrics_results['auc'][dataset][-1]:.4f}")
-
-            except Exception as e:
-                # 错误处理：将所有指标都记录为NaN
-                for metric in metrics_results.keys():
-                    metrics_results[metric][dataset].append(np.nan)
-                print(f"Error processing {dataset}: {e}")
-
-    # 计算并打印最终结果
-    print("\n===== Final Results (Mean ± Std) =====")
-    results_list = []
-
+    # 分析每个数据集
     for dataset in datasets:
-        results = {
-            'Dataset': dataset,
-            'Accuracy': f"{np.nanmean(metrics_results['accuracy'][dataset]):.4f} ± {np.nanstd(metrics_results['accuracy'][dataset]):.4f}",
-            'Precision': f"{np.nanmean(metrics_results['precision'][dataset]):.4f} ± {np.nanstd(metrics_results['precision'][dataset]):.4f}",
-            'Recall': f"{np.nanmean(metrics_results['recall'][dataset]):.4f} ± {np.nanstd(metrics_results['recall'][dataset]):.4f}",
-            'F1': f"{np.nanmean(metrics_results['f1'][dataset]):.4f} ± {np.nanstd(metrics_results['f1'][dataset]):.4f}",
-            'AUC': f"{np.nanmean(metrics_results['auc'][dataset]):.4f} ± {np.nanstd(metrics_results['auc'][dataset]):.4f}"
-        }
-        results_list.append(results)
+        file_path = os.path.join(base_path, dataset)
+        if os.path.exists(file_path):
+            X, Y, labels, counts = load_and_analyze_data(file_path)
+            if X is not None:
+                datasets_info[dataset] = (labels, counts)
+                # 计算特征统计信息
+                feature_stats[dataset] = {
+                    'mean': X.mean(),
+                    'std': X.std(),
+                    'range': (X.min(), X.max()),
+                    'n_features': X.shape[1]
+                }
+        else:
+            print(f"文件不存在: {file_path}")
 
-    # 创建DataFrame
-    results_df = pd.DataFrame(results_list)
+    # 创建汇总表
+    if datasets_info:
+        print("\n创建数据集汇总表...")
+        summary_table = create_dataset_summary_table(datasets_info, feature_stats)
+        print("\n数据集汇总信息:")
+        print(summary_table.to_string(index=False))
 
-    # 打印表格形式的结果
-    print("\nResults Table:")
-    print(results_df.to_string(index=False))
+        # 绘制可视化图表
+        print("\n生成可视化图表...")
+        plot_sample_feature_distribution(datasets_info, feature_stats)
+        plot_class_distribution(datasets_info)
 
-    # 保存结果到CSV文件
-    results_df.to_csv('classification_results.csv', index=False)
-    print("\nResults have been saved to 'classification_results.csv'")
+        # 导出汇总表为CSV
+        summary_table.to_csv('dataset_summary.csv', index=False, encoding='utf-8-sig')
+        print("\n汇总表已导出为 dataset_summary.csv")
 
-    # 打印每个数据集的详细统计信息
-    print("\n===== Detailed Statistics =====")
-    for dataset in datasets:
-        print(f"\nDataset: {dataset}")
-        for metric in metrics_results.keys():
-            values = np.array(metrics_results[metric][dataset])
-            mean = np.nanmean(values)
-            std = np.nanstd(values)
-            max_val = np.nanmax(values)
-            min_val = np.nanmin(values)
 
-            print(f"{metric.capitalize()}:")
-            print(f"  Mean ± Std: {mean:.4f} ± {std:.4f}")
-            print(f"  Max: {max_val:.4f}")
-            print(f"  Min: {min_val:.4f}")
-
-    # 创建数值格式的结果DataFrame
-    numeric_results_list = []
-    for dataset in datasets:
-        numeric_results = {
-            'Dataset': dataset,
-            'Accuracy_Mean': np.nanmean(metrics_results['accuracy'][dataset]),
-            'Accuracy_Std': np.nanstd(metrics_results['accuracy'][dataset]),
-            'Precision_Mean': np.nanmean(metrics_results['precision'][dataset]),
-            'Precision_Std': np.nanstd(metrics_results['precision'][dataset]),
-            'Recall_Mean': np.nanmean(metrics_results['recall'][dataset]),
-            'Recall_Std': np.nanstd(metrics_results['recall'][dataset]),
-            'F1_Mean': np.nanmean(metrics_results['f1'][dataset]),
-            'F1_Std': np.nanstd(metrics_results['f1'][dataset]),
-            'AUC_Mean': np.nanmean(metrics_results['auc'][dataset]),
-            'AUC_Std': np.nanstd(metrics_results['auc'][dataset])
-        }
-        numeric_results_list.append(numeric_results)
-
-    numeric_results_df = pd.DataFrame(numeric_results_list)
-    numeric_results_df.to_csv('classification_results_numeric.csv', index=False)
-    print("\nNumeric results have been saved to 'classification_results_numeric.csv'")
+if __name__ == "__main__":
+    main()

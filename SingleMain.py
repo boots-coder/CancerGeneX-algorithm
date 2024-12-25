@@ -186,7 +186,7 @@ if __name__ == '__main__':
 
     # 测试仅GLI_85数据集举例
     datasets = {
-        "SMK_CAN_187": "data/SMK_CAN_187.mat"
+        "Prostate_GE": "data/Prostate_GE.mat"
     }
 
     for name, file_path in datasets.items():
