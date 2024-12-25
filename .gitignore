@@ -3,6 +3,7 @@
 
 # Ignore dataset files
 *.csv
+*.mat
 data/
 
 # Ignore specific project folders (if needed)
