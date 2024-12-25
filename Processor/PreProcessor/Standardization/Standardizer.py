@@ -32,7 +32,8 @@ class StandardizationPreProcessorWrapper(PreProcessorTemplate):
     def fit_excecute(self, datas):
         proceesed_data = datas["Original"]
         features_train = proceesed_data["X_train"]
-        #todo 这里方法是空， 可以方便我们后期对数据进行预处理
+        #todo 这里方法是空， 可以方便我们后期对数据进行预处理；；
+        #todo 现在写的乱七八糟的
         featutres_train = self.excecute_feature_processor(features_train)
         datas["Original"]["X_train"] = featutres_train
 

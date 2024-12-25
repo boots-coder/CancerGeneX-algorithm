@@ -711,8 +711,8 @@ class UnimodalModel():
             data = self.pre_predict_cascade_data_and_infos(data, layer)
             f_select_ids = self.obtain_cascade_f_select_ids(layer)
             data = self.execute_predict_feature_selection(data, f_select_ids)
-            # data = self.execute_feature_and_data_predict_fusion(data, layer)
-            # data = self.execute_predict_fusion_features_processors(data, layer)
+            data = self.execute_feature_and_data_predict_fusion(data, layer)
+            data = self.execute_predict_fusion_features_processors(data, layer)
 
             classifier_instances = self.obtain_cascade_predict_classifier_instance(layer)
             all_finfos = self.obtain_relevant_to_predict_data(data, classifier_instances, layer)
@@ -765,34 +765,40 @@ class UnimodalModel():
             data["Processed"] = copy.deepcopy(data["Original"])
         return data
 
-    # def execute_feature_and_data_predict_fusion(self, data, layer):
-    #     if self.feature_fusions.executable(layer):
-    #         original_X = data["Processed"]["X"]
-    #         finfos = data.get("Finfos")
-    #         fusion_X = self.feature_fusions.predict_excecute(original_X, finfos, layer)
-    #         data["Processed"]["X"] = fusion_X
-    #     return data
-
+    """
+    常规预测逻辑
+    """
     def execute_feature_and_data_predict_fusion(self, data, layer):
         if self.feature_fusions.executable(layer):
             original_X = data["Processed"]["X"]
             finfos = data.get("Finfos")
-
-            # 将聚类得到的代表性特征与original_X拼接
-            cluster_details = data.get("cluster_details", {})
-            rep_test_list = []
-            for c, details in cluster_details.items():
-                if "representative_feature_values_predict" in details:
-                    rep_test_list.append(details["representative_feature_values_predict"])
-
-            if len(rep_test_list) > 0:
-                rep_test_features = np.hstack(rep_test_list)
-                original_X = np.concatenate([original_X, rep_test_features], axis=1)
-
-            # 再进行特征融合预测流程
-            fusion_X = self.feature_fusions.predict_excecute(data, original_X, finfos, layer)
+            fusion_X = self.feature_fusions.predict_excecute(original_X, finfos, layer)
             data["Processed"]["X"] = fusion_X
         return data
+
+    """
+    聚类预测逻辑
+    """
+    # def execute_feature_and_data_predict_fusion(self, data, layer):
+    #     if self.feature_fusions.executable(layer):
+    #         original_X = data["Processed"]["X"]
+    #         finfos = data.get("Finfos")
+    #
+    #         # 将聚类得到的代表性特征与original_X拼接
+    #         cluster_details = data.get("cluster_details", {})
+    #         rep_test_list = []
+    #         for c, details in cluster_details.items():
+    #             if "representative_feature_values_predict" in details:
+    #                 rep_test_list.append(details["representative_feature_values_predict"])
+    #
+    #         if len(rep_test_list) > 0:
+    #             rep_test_features = np.hstack(rep_test_list)
+    #             original_X = np.concatenate([original_X, rep_test_features], axis=1)
+    #
+    #         # 再进行特征融合预测流程
+    #         fusion_X = self.feature_fusions.predict_excecute(data, original_X, finfos, layer)
+    #         data["Processed"]["X"] = fusion_X
+    #     return data
 
     def execute_predict_fusion_features_processors(self, data, layer):
         if self.fusion_features_processors is None or len(self.fusion_features_processors) == 0:

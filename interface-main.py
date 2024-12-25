@@ -40,6 +40,51 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def get_base_feature_selectors(selected_selectors=None):
+    """获取特征选择器配置"""
+    all_selectors = {
+        "GCLasso": {
+            "Type": "FeatureSelection",
+            "Method": "GCLasso",
+            "Parameter": {},
+        },
+        "GCFClassif": {
+            "Type": "FeatureSelection",
+            "Method": "GCFClassif",
+            "Parameter": {},
+        },
+        "GCVariance": {
+            "Type": "FeatureSelection",
+            "Method": "GCVariance",
+            "Parameter": {"threshold": 0.01},
+        },
+        "GCMutualInfo": {
+            "Type": "FeatureSelection",
+            "Method": "GCMutualInfo",
+            "Parameter": {"threshold": 0.05},
+        },
+        "GCChiSquare": {
+            "Type": "FeatureSelection",
+            "Method": "GCChiSquare",
+            "Parameter": {"P": 0.05},
+        },
+        "GCCorrelation": {
+            "Type": "FeatureSelection",
+            "Method": "GCCorrelation",
+            "Parameter": {"threshold": 0.1},
+        }
+    }
+
+    if selected_selectors is None:
+        return {"GCLasso": all_selectors["GCLasso"]}  # 默认使用GCLasso
+
+    # 如果传入的是字符串，转换为列表
+    if isinstance(selected_selectors, str):
+        selected_selectors = [selected_selectors]
+
+    return {k: all_selectors[k] for k in selected_selectors if k in all_selectors}
+
+
 def get_base_classifiers(selected_classifiers=None):
     """获取基础分类器配置"""
     all_classifiers = {
@@ -109,7 +154,7 @@ def get_base_classifiers(selected_classifiers=None):
     return {k: all_classifiers[k] for k in selected_classifiers if k in all_classifiers}
 
 
-def build_model_config(class_num=2, selected_classifiers=None):
+def build_model_config(class_num=2, selected_classifiers=None, selected_selectors=None):
     """构建模型配置"""
     return {
         "ClassNum": class_num,
@@ -123,13 +168,7 @@ def build_model_config(class_num=2, selected_classifiers=None):
                 "FeaturesType": []
             }
         },
-        "FeatureSelector": {
-            "GCLasso": {
-                "Type": "FeatureSelection",
-                "Method": "GCLasso",
-                "Parameter": {},
-            }
-        },
+        "FeatureSelector": get_base_feature_selectors(selected_selectors),
         "FeatureFusion": {
             "Name": "FeatureFusion",
             "BuilderType": ["ML", "DL", "cluster"],
@@ -201,6 +240,7 @@ def train():
         # 解析配置
         config = json.loads(request.form.get('config', '{}'))
         selected_classifiers = config.get('classifiers', None)
+        selected_selectors = config.get('selectors', None)
         splits = config.get('splits', {'train': 0.2, 'val': 0.5, 'test': 0.3})
 
         # 保存文件
@@ -222,7 +262,11 @@ def train():
             try:
                 # 加载数据
                 X, y = load_data(file_path)
-                model_config = build_model_config(class_num=2, selected_classifiers=selected_classifiers)
+                model_config = build_model_config(
+                    class_num=2,
+                    selected_classifiers=selected_classifiers,
+                    selected_selectors=selected_selectors
+                )
 
                 # 数据集划分
                 x_train_val, x_test, y_train_val, y_test = train_test_split(
@@ -306,6 +350,6 @@ def get_status(task_id):
 
     return jsonify(response)
 
-# interface-main.py
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)

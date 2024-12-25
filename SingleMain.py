@@ -16,7 +16,8 @@ if __name__ == '__main__':
         "ClassNum": class_num,  # 注意这个参数一定要改
         "Metric": "acc",
         "DataType": {"Global"},
-
+### 这里取消了标准化的Standardization -- 具体见SelectorWrapper
+        #todo 后续改进-数据标准化
         "PreProcessors": {
             "MinMax": {
                 "Type": "Standardization",
@@ -25,7 +26,7 @@ if __name__ == '__main__':
                 "FeaturesType": []
             },
         },
-
+#卡方检验用不了
         "FeatureSelector": {
             "GCLasso": {
                 "Type": "FeatureSelection",
@@ -132,7 +133,7 @@ if __name__ == '__main__':
                 }
             },
 
-            "BNN": {
+            "Transformer": {
                 "Layers": None,
                 "Builder": "DL",
                 "DataType": ["Global", "Local"],
@@ -141,7 +142,7 @@ if __name__ == '__main__':
                     "Parameter": {}
                 },
                 "Model": {
-                    "name": "BNN",
+                    "name": "Transformer",
                     "Parameter": {"ClassNum": 2}
                 },
                 "LossFun": {
@@ -206,29 +207,6 @@ if __name__ == '__main__':
             # 使用训练集和验证集训练模型（不使用测试集）
             model = UnimodalModel(config)
             model.fit(x_train, y_train, x_val, y_val)
-
-            # 使用测试集进行最终评估 0.76 ；
-            # 特征的区别和对比
-
-    #         lasso - [svm ]
-    #
-    #           28 - +;
-    #         data - 28 - 1
-    #     [f1 lasso gclasso graces] - [base classifier]
-    # []- zhohui , a 1 ;c b ;
-    #
-    #     julei 28 -
-    #     +28 , , , ,, , - you ; +
-    # ---
-    #     10 - 2 ; 11 - 3 ;  --
-    #     -- 78 =
-    #     68 88 -
-    #
-    #     2 3 - 5 +
-
-
-
-
             # y_pred = model.predict(x_test)
             y_pred_proba = model.predict_proba(x_test)
             # 确保得到的是正类的概率值

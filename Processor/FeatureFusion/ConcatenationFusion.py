@@ -122,40 +122,39 @@ class FeatureConcatenation(FeatFusionTemplate):
         final_features_X = np.concatenate(final_features_X, axis=1)
         return final_features_X
 
-    # def predict_excecute(self, X, finfos, layer):
-    #
-    #     finfos_layers = self.obtain_finfos_by_layers(finfos, layer)
-    #     need_finfos = self.obtain_need_finfos(finfos_layers)
-    #     need_finfos = self.obtain_need_predict_finfos(need_finfos)
-    #
-    #     features_X = self.obtain_final_predict_features(need_finfos)
-    #     fusions_X = np.concatenate([X, features_X], axis=1)
-    #
-    #     return fusions_X
-    # 预测阶段特征融合
-    def predict_excecute(self, data, X, finfos, layer):
+    def predict_excecute(self, X, finfos, layer):
+
         finfos_layers = self.obtain_finfos_by_layers(finfos, layer)
         need_finfos = self.obtain_need_finfos(finfos_layers)
         need_finfos = self.obtain_need_predict_finfos(need_finfos)
 
         features_X = self.obtain_final_predict_features(need_finfos)
-        if features_X is None:
-            fusions_X = X
-        else:
-            # fusions_X = np.concatenate([X, features_X], axis=1)
-            fusions_X = X
-
-
-        # 与fit_excecute类似，将cluster_details中的representative_feature_values_predict拼接
-        cluster_details = data.get("cluster_details", {})
-        rep_test_list = []
-        for c, details in cluster_details.items():
-            if "representative_feature_values_predict" in details:
-                rep_test_list.append(details["representative_feature_values_predict"])
-
-        if len(rep_test_list) > 0:
-            rep_test_features = np.hstack(rep_test_list)
-            # fusions_X = np.concatenate([fusions_X, rep_test_features], axis=1)
+        fusions_X = np.concatenate([X, features_X], axis=1)
 
         return fusions_X
-
+    # 预测阶段特征融合 --- 聚类
+    # def predict_excecute(self, data, X, finfos, layer):
+    #     finfos_layers = self.obtain_finfos_by_layers(finfos, layer)
+    #     need_finfos = self.obtain_need_finfos(finfos_layers)
+    #     need_finfos = self.obtain_need_predict_finfos(need_finfos)
+    #
+    #     features_X = self.obtain_final_predict_features(need_finfos)
+    #     if features_X is None:
+    #         fusions_X = X
+    #     else:
+    #         # fusions_X = np.concatenate([X, features_X], axis=1)
+    #         fusions_X = X
+    #
+    #     # 与fit_excecute类似，将cluster_details中的representative_feature_values_predict拼接
+    #     cluster_details = data.get("cluster_details", {})
+    #     rep_test_list = []
+    #     for c, details in cluster_details.items():
+    #         if "representative_feature_values_predict" in details:
+    #             rep_test_list.append(details["representative_feature_values_predict"])
+    #
+    #     if len(rep_test_list) > 0:
+    #         rep_test_features = np.hstack(rep_test_list)
+    #         # fusions_X = np.concatenate([fusions_X, rep_test_features], axis=1)
+    #
+    #     return fusions_X
+    #

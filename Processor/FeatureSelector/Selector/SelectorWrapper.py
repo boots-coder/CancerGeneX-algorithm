@@ -91,7 +91,8 @@ class SelectorWrapper(FeatureSelectorTemplate):
     # 拟合模型
     def _fit(self, X, y):
         if self.scaler:
-            X = self.scaler.fit_transform(X)  # 标准化训练数据
+            X = self.scaler.fit_transform(X)
+            print("数据标准化")# 标准化训练数据
         self.est.fit(X, y)  # 拟合模型
 
     # 公共的拟合方法，包含初始化估计器的步骤
