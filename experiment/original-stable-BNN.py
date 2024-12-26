@@ -38,20 +38,7 @@ if __name__ == '__main__':
                 "FeaturesType": []
             },
         },
-        # 卡方检验用不了
-        # "FeatureSelector": {
-        #     "GCLasso": {
-        #         "Type": "FeatureSelection",
-        #         "Method": "GCLasso",
-        #         "Parameter": {},
-        #     },
-        #     "RecallAttribute": {
-        #         "name": "RecallAttribute",
-        #         "Type": "RecallAttribute",
-        #         "Method": "RecallAttribute",
-        #         "Parameter": {0.1},
-        #     },
-        # },
+        #卡方检验用不了
         "FeatureSelector": {
             "GCLasso": {
                 "Type": "FeatureSelection",
@@ -59,35 +46,48 @@ if __name__ == '__main__':
                 "Parameter": {},
             },
             "RecallAttribute": {
-                "name": "TwoStageRecall",
+                "name": "RecallAttribute",
                 "Type": "RecallAttribute",
-                "Method": "TwoStageRecall",
-                "Parameter": {
-                    "RandomSelectRatio": 0.3,  # 第一阶段随机选择30%的特征
-                    "SelectorConfigs": {
-                        "MinVotes": 2,  # 最少需要2个选择器选中
-                        # 有监督方法参数
-                        "MutualInfoPercentile": 10,  # 互信息
-                        "VarianceThreshold": 0.1,  # 方差阈值
-                        "RFImportancePercentile": 10,  # 随机森林
-                        "FScorePercentile": 10,  # F-score
-                        "Chi2Percentile": 10,  # 卡方检验
-                        "LassoAlpha": 0.01,  # LASSO
-                        "GBDTImportancePercentile": 10,  # GBDT
-
-                        # 无监督方法参数
-                        "PCAVarianceRatio": 0.9,  # PCA保留方差比例
-                        "AEEncodingDim": 64,  # AutoEncoder编码维度
-                        "AEEpochs": 50,  # AutoEncoder训练轮数
-                        "AEBatchSize": 256,  # AutoEncoder批次大小
-                        "AELearningRate": 0.001,  # AutoEncoder学习率
-                        "AEReconstructionThreshold": 0.1  # AutoEncoder重构阈值
-                    }
-                },
+                "Method": "RecallAttribute",
+                "Parameter": {0.1},
             },
         },
+        # "FeatureSelector": {
+        #     "GCLasso": {
+        #         "Type": "FeatureSelection",
+        #         "Method": "GCLasso",
+        #         "Parameter": {},
+        #     },
+        #     "RecallAttribute": {
+        #         "name": "TwoStageRecall",
+        #         "Type": "RecallAttribute",
+        #         "Method": "TwoStageRecall",
+        #         "Parameter": {
+        #             "RandomSelectRatio": 0.3,  # 第一阶段随机选择30%的特征
+        #             "SelectorConfigs": {
+        #                 "MinVotes": 2,  # 最少需要2个选择器选中
+        #                 # 有监督方法参数
+        #                 "MutualInfoPercentile": 10,  # 互信息
+        #                 "VarianceThreshold": 0.1,  # 方差阈值
+        #                 "RFImportancePercentile": 10,  # 随机森林
+        #                 "FScorePercentile": 10,  # F-score
+        #                 "Chi2Percentile": 10,  # 卡方检验
+        #                 "LassoAlpha": 0.01,  # LASSO
+        #                 "GBDTImportancePercentile": 10,  # GBDT
+        #
+        #                 # 无监督方法参数
+        #                 "PCAVarianceRatio": 0.9,  # PCA保留方差比例
+        #                 "AEEncodingDim": 64,  # AutoEncoder编码维度
+        #                 "AEEpochs": 50,  # AutoEncoder训练轮数
+        #                 "AEBatchSize": 256,  # AutoEncoder批次大小
+        #                 "AELearningRate": 0.001,  # AutoEncoder学习率
+        #                 "AEReconstructionThreshold": 0.1  # AutoEncoder重构阈值
+        #             }
+        #         },
+        #     },
+        # },
         "CategoryImbalance": {
-            "Name": "RandomOverSampler",
+            "Name": "SMOTE",
             "Type": "CategoryImbalance",
             "Parameter": {},
         },
@@ -323,7 +323,7 @@ if __name__ == '__main__':
     results_df = pd.DataFrame(results_list)
     print("\nResults Table:")
     print(results_df.to_string(index=False))
-    results_df.to_csv('classification_results.csv', index=False)
+    results_df.to_csv('classification_results-BNN-Original.csv', index=False)
     print("\nResults have been saved to 'classification_results.csv'")
 
     # 创建数值格式的结果DataFrame
@@ -345,7 +345,7 @@ if __name__ == '__main__':
         numeric_results_list.append(numeric_results)
 
     numeric_results_df = pd.DataFrame(numeric_results_list)
-    numeric_results_df.to_csv('classification_results_numeric.csv', index=False)
+    numeric_results_df.to_csv('classification_results_numeric-BNN-original.csv', index=False)
     print("\nNumeric results have been saved to 'classification_results_numeric.csv'")
 
     # 打印每个数据集的详细统计信息
