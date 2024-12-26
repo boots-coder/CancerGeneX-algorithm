@@ -184,7 +184,7 @@ if __name__ == '__main__':
                 }
             },
 
-            "Transformer": {
+            "BNN": {
                 "Layers": None,
                 "Builder": "DL",
                 "DataType": ["Global", "Local"],
@@ -193,7 +193,7 @@ if __name__ == '__main__':
                     "Parameter": {}
                 },
                 "Model": {
-                    "name": "Transformer",
+                    "name": "BNN",
                     "Parameter": {"ClassNum": 2}
                 },
                 "LossFun": {
