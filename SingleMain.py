@@ -90,10 +90,12 @@ if __name__ == '__main__':
 
         "MetricsProcessors": {
             "Name": "MetricsProcessor",
-            "BuilderType": ["ML", "DL"],
+            # "BuilderType": ["ML", "DL"],
+            "BuilderType": ["ML"],
             "Type": "AvgMetricProcessor",
             "ClassifierMethod": "acc",
         },
+# zishiying 3 个 ---
 
         "CascadeClassifier": {
             "AdaptiveEnsembleClassifyByNum": {
@@ -166,6 +168,27 @@ if __name__ == '__main__':
             },
 
             "Transformer": {
+                "Layers": None,
+                "Builder": "DL",
+                "DataType": ["Global", "Local"],
+                "Trainer": {
+                    "name": "TrainerWrapper",
+                    "Parameter": {}
+                },
+                "Model": {
+                    "name": "Transformer",
+                    "Parameter": {"ClassNum": 2}
+                },
+                "LossFun": {
+                    "name": "CrossEntropyLoss",
+                    "Parameter": {}
+                },
+                "Optimizer": {
+                    "name": "Adam",
+                    "Parameter": {"lr": 0.001},
+                }
+            },
+            "BNN": {
                 "Layers": None,
                 "Builder": "DL",
                 "DataType": ["Global", "Local"],
