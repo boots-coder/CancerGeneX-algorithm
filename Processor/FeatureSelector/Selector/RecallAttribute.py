@@ -1,73 +1,80 @@
+import random
+
 import numpy as np
+import torch
+import torch.nn as nn
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import (
     mutual_info_classif,
     VarianceThreshold,
     f_classif,
-    chi2,
-    SelectKBest,
-    SelectFromModel
+    chi2
 )
+
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import Lasso, LogisticRegression
 from sklearn.svm import LinearSVC
-from sklearn.preprocessing import MinMaxScaler
-from collections import Counter
+from collections import Counter, defaultdict
+from Processor.Common.Template import FeatureSelectorTemplate
+
+
 from Processor.Common.Template import FeatureSelectorTemplate
 def get_attribute_recall_method(name, kwargs):
     # 从 kwargs 中获取 'name' 的值
     kwargs_name = kwargs.get("name", None)
-    # if kwargs_name == "RecallAttribute":
-    #     return RecallAttribute(name, kwargs)
+    if kwargs_name == "RecallAttribute":
+        return RecallAttribute(name, kwargs)
     if kwargs_name == "SelectorBasedRecall":
         return SelectorBasedRecall(name, kwargs)
 
-# class RecallAttribute(FeatureSelectorTemplate):
-#
-#     def __init__(self, name, configs=None):
-#         self.name = name
-#         self.recall_ratio = configs.get("RecallRatio", 0.1)
-#         self.default_recall_ratio = configs.get("DefualtRecallRatio", 0.1)
-#         self.is_encapsulated = configs.get("IsEncapsulated", True)
-#
-#     def fit_executable(self, layer):
-#         return layer >= 2
-#
-#     def fit_excecute(self, f_select_ids, f_select_infos, layer):
-#         assert f_select_ids != None, "当前层没有进行特征筛选模块，无法进行属性召回"
-#
-#         # 总特征数量
-#         totall_feature_num = f_select_infos.get("Dim", None)
-#
-#         f_select_num = len(f_select_ids)
-#         recall_ratio = self._obtain_recall_ratio(layer)
-#         # 进行特征召回的具体数量
-#         recall_num = int(recall_ratio * (totall_feature_num - f_select_num))
-#
-#         all_attribute_ids = set(range(totall_feature_num))
-#         no_selected_ids = all_attribute_ids - set(f_select_ids)
-#         assert 0 <= recall_num <= len(no_selected_ids), "召回特征的数量不能超过未选择的特征数量"
-#
-#         recall_ids = random.sample(list(no_selected_ids), recall_num)
-#         f_select_ids = recall_ids + f_select_ids
-#
-#         f_select_infos["RecallNum"] = recall_num
-#
-#         return f_select_ids, f_select_infos
-#
-#     def _obtain_recall_ratio(self, layer=None):
-#         if isinstance(self.recall_ratio, float):
-#             assert 0 <= self.recall_ratio <= 1 , "召回的比率不在 0 - 1 之间"
-#             return self.recall_ratio
-#
-#         if isinstance(self.recall_ratio, dict):
-#             current_recall_ratio = self.recall_ratio.get(layer, None)
-#             if current_recall_ratio == None :
-#                 current_recall_ratio = self.recall_ratio.get("default", self.default_recall_ratio)
-#                 print("请注意当前层的特征召回比率是默认值", self.default_recall_ratio)
-#             assert 0 <= current_recall_ratio <= 1, "召回的比率不在 0 - 1 之间"
-#             return current_recall_ratio
+class RecallAttribute(FeatureSelectorTemplate):
 
-#并集+交集
+    def __init__(self, name, configs=None):
+        self.name = name
+        self.recall_ratio = configs.get("RecallRatio", 0.1)
+        self.default_recall_ratio = configs.get("DefualtRecallRatio", 0.1)
+        self.is_encapsulated = configs.get("IsEncapsulated", True)
+
+    def fit_executable(self, layer):
+        return layer >= 2
+
+    def fit_excecute(self, f_select_ids, f_select_infos, layer):
+        assert f_select_ids != None, "当前层没有进行特征筛选模块，无法进行属性召回"
+
+        # 总特征数量
+        totall_feature_num = f_select_infos.get("Dim", None)
+
+        f_select_num = len(f_select_ids)
+        recall_ratio = self._obtain_recall_ratio(layer)
+        # 进行特征召回的具体数量
+        recall_num = int(recall_ratio * (totall_feature_num - f_select_num))
+
+        all_attribute_ids = set(range(totall_feature_num))
+        no_selected_ids = all_attribute_ids - set(f_select_ids)
+        assert 0 <= recall_num <= len(no_selected_ids), "召回特征的数量不能超过未选择的特征数量"
+
+        recall_ids = random.sample(list(no_selected_ids), recall_num)
+        f_select_ids = recall_ids + f_select_ids
+
+        f_select_infos["RecallNum"] = recall_num
+
+        return f_select_ids, f_select_infos
+
+    def _obtain_recall_ratio(self, layer=None):
+        if isinstance(self.recall_ratio, float):
+            assert 0 <= self.recall_ratio <= 1 , "召回的比率不在 0 - 1 之间"
+            return self.recall_ratio
+
+        if isinstance(self.recall_ratio, dict):
+            current_recall_ratio = self.recall_ratio.get(layer, None)
+            if current_recall_ratio == None :
+                current_recall_ratio = self.recall_ratio.get("default", self.default_recall_ratio)
+                print("请注意当前层的特征召回比率是默认值", self.default_recall_ratio)
+            assert 0 <= current_recall_ratio <= 1, "召回的比率不在 0 - 1 之间"
+            return current_recall_ratio
+
+# 并集+交集
 # class SelectorBasedRecall(FeatureSelectorTemplate):
 #     """基于多个特征选择器的特征召回方法，重复特征代表更高重要性"""
 #
@@ -167,7 +174,7 @@ def get_attribute_recall_method(name, kwargs):
 #         return f_select_ids, f_select_infos
 
 
-#交集
+# 交集
 # class SelectorBasedRecall(FeatureSelectorTemplate):
 #     """基于多个特征选择器交集的特征召回方法"""
 #
@@ -266,7 +273,6 @@ def get_attribute_recall_method(name, kwargs):
 #         return f_select_ids, f_select_infos
 
 
-#更多
 """
 交集
 """
@@ -451,23 +457,6 @@ def get_attribute_recall_method(name, kwargs):
 """
 vote
 """
-
-import numpy as np
-import torch
-import torch.nn as nn
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import (
-    mutual_info_classif,
-    VarianceThreshold,
-    f_classif,
-    chi2
-)
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import Lasso, LogisticRegression
-from sklearn.svm import LinearSVC
-from collections import Counter, defaultdict
-from Processor.Common.Template import FeatureSelectorTemplate
 
 
 class AutoEncoder(nn.Module):

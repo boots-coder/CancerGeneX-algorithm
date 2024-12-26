@@ -27,19 +27,6 @@ if __name__ == '__main__':
             },
         },
 #卡方检验用不了
-        # "FeatureSelector": {
-        #     "GCLasso": {
-        #         "Type": "FeatureSelection",
-        #         "Method": "GCLasso",
-        #         "Parameter": {},
-        #     },
-        #     "RecallAttribute": {
-        #         "name": "RecallAttribute",
-        #         "Type": "RecallAttribute",
-        #         "Method": "RecallAttribute",
-        #         "Parameter": {0.1},
-        #     },
-        # },
         "FeatureSelector": {
             "GCLasso": {
                 "Type": "FeatureSelection",
@@ -47,26 +34,39 @@ if __name__ == '__main__':
                 "Parameter": {},
             },
             "RecallAttribute": {
-                "name": "SelectorBasedRecall",
+                "name": "RecallAttribute",
                 "Type": "RecallAttribute",
-                "Method": "SelectorBasedRecall",
-                "Parameter": {
-                    "SelectorConfigs": {
-                        "MinVotes": 2,  # 最少需要2个选择器选中
-                        "MutualInfoPercentile": 10,  # 互信息
-                        "VarianceThreshold": 0.1,  # 方差阈值
-                        "RFImportancePercentile": 10,  # 随机森林
-                        "FScorePercentile": 10,  # F-score
-                        "Chi2Percentile": 10,  # 卡方检验
-                        "CorrelationPercentile": 10,  # 相关系数
-                        "LassoAlpha": 0.01,  # LASSO
-                        "GBDTImportancePercentile": 10,  # GBDT
-                        "L1SVCPercentile": 10,  # L1-SVM
-                        "LogisticL1Percentile": 10  # L1逻辑回归
-                    }
-                },
+                "Method": "RecallAttribute",
+                "Parameter": {0.1},
             },
         },
+        # "FeatureSelector": {
+        #     "GCLasso": {
+        #         "Type": "FeatureSelection",
+        #         "Method": "GCLasso",
+        #         "Parameter": {},
+        #     },
+        #     "RecallAttribute": {
+        #         "name": "SelectorBasedRecall",
+        #         "Type": "RecallAttribute",
+        #         "Method": "SelectorBasedRecall",
+        #         "Parameter": {
+        #             "SelectorConfigs": {
+        #                 "MinVotes": 2,  # 最少需要2个选择器选中
+        #                 "MutualInfoPercentile": 10,  # 互信息
+        #                 "VarianceThreshold": 0.1,  # 方差阈值
+        #                 "RFImportancePercentile": 10,  # 随机森林
+        #                 "FScorePercentile": 10,  # F-score
+        #                 "Chi2Percentile": 10,  # 卡方检验
+        #                 "CorrelationPercentile": 10,  # 相关系数
+        #                 "LassoAlpha": 0.01,  # LASSO
+        #                 "GBDTImportancePercentile": 10,  # GBDT
+        #                 "L1SVCPercentile": 10,  # L1-SVM
+        #                 "LogisticL1Percentile": 10  # L1逻辑回归
+        #             }
+        #         },
+        #     },
+        # },
         "CategoryImbalance": {
             "Name" : "RandomOverSampler",
             "Type" : "CategoryImbalance",

@@ -453,7 +453,7 @@ class UnimodalModel():
             print("使用的特征筛选器的数量为:", len(feature_selector_names))
             if len(feature_selector_names) > 0:
                 print("使用的特征筛选器的名字分别是", feature_selector_names)
-                if f_select_infos.get("NewTeatures"):
+                if f_select_infos.get("NewFeatures"):
                     print(feature_selector_names[0] + "重新进行了特征筛选")
                 else:
                     print(feature_selector_names[0] + "使用之前筛选好的特征")

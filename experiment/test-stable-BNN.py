@@ -28,16 +28,30 @@ if __name__ == '__main__':
         "ClassNum": class_num,  # 注意这个参数一定要改
         "Metric": "acc",
         "DataType": {"Global"},
-
+        ### 这里取消了标准化的Standardization -- 具体见SelectorWrapper
+        # todo 后续改进-数据标准化
         "PreProcessors": {
-            "Zscore": {
+            "MinMax": {
                 "Type": "Standardization",
-                "Method": "Zscore",
+                "Method": "DecimalScale",
                 "BuilderType": ["DL"],
                 "FeaturesType": []
             },
         },
-
+        # 卡方检验用不了
+        # "FeatureSelector": {
+        #     "GCLasso": {
+        #         "Type": "FeatureSelection",
+        #         "Method": "GCLasso",
+        #         "Parameter": {},
+        #     },
+        #     "RecallAttribute": {
+        #         "name": "RecallAttribute",
+        #         "Type": "RecallAttribute",
+        #         "Method": "RecallAttribute",
+        #         "Parameter": {0.1},
+        #     },
+        # },
         "FeatureSelector": {
             "GCLasso": {
                 "Type": "FeatureSelection",
@@ -45,16 +59,35 @@ if __name__ == '__main__':
                 "Parameter": {},
             },
             "RecallAttribute": {
-                "name": "RecallAttribute",
+                "name": "SelectorBasedRecall",
                 "Type": "RecallAttribute",
-                "Method": "RecallAttribute",
-                "Parameter": {0.1},
+                "Method": "SelectorBasedRecall",
+                "Parameter": {
+                    "SelectorConfigs": {
+                        "MinVotes": 2,  # 最少需要2个选择器选中
+                        "MutualInfoPercentile": 10,  # 互信息
+                        "VarianceThreshold": 0.1,  # 方差阈值
+                        "RFImportancePercentile": 10,  # 随机森林
+                        "FScorePercentile": 10,  # F-score
+                        "Chi2Percentile": 10,  # 卡方检验
+                        "CorrelationPercentile": 10,  # 相关系数
+                        "LassoAlpha": 0.01,  # LASSO
+                        "GBDTImportancePercentile": 10,  # GBDT
+                        "L1SVCPercentile": 10,  # L1-SVM
+                        "LogisticL1Percentile": 10  # L1逻辑回归
+                    }
+                },
             },
+        },
+        "CategoryImbalance": {
+            "Name": "RandomOverSampler",
+            "Type": "CategoryImbalance",
+            "Parameter": {},
         },
 
         "FeatureFusion": {
             "Name": "FeatureFusion",
-            "BuilderType": ["ML", "DL"],
+            "BuilderType": ["ML", "DL", "cluster"],
             "Type": "FeatureConcatenation",
         },
 
@@ -86,12 +119,12 @@ if __name__ == '__main__':
                         "Layer": [2, 3],
                         "Type": "RandomForestClassifier",
                         "Parameter": {"n_estimators": 100, "criterion": "gini",
-                                      "class_weight": None, "random_state": RANDOM_SEED},
+                                      "class_weight": None, "random_state": 0},
                     },
                     "ExtraTreesClassifier": {
                         "Type": "ExtraTreesClassifier",
                         "Parameter": {"n_estimators": 100, "criterion": "gini",
-                                      "class_weight": None, "random_state": RANDOM_SEED},
+                                      "class_weight": None, "random_state": 0},
                     },
                     "GaussianNBClassifier": {
                         "Type": "GaussianNBClassifier",
@@ -144,7 +177,7 @@ if __name__ == '__main__':
                 }
             },
 
-            "BNN": {
+            "Transformer": {
                 "Layers": None,
                 "Builder": "DL",
                 "DataType": ["Global", "Local"],
@@ -153,7 +186,7 @@ if __name__ == '__main__':
                     "Parameter": {}
                 },
                 "Model": {
-                    "name": "BNN",
+                    "name": "Transformer",
                     "Parameter": {"ClassNum": 2}
                 },
                 "LossFun": {
