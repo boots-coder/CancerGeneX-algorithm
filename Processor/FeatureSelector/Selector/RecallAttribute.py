@@ -25,8 +25,8 @@ def get_attribute_recall_method(name, kwargs):
     kwargs_name = kwargs.get("name", None)
     if kwargs_name == "RecallAttribute":
         return RecallAttribute(name, kwargs)
-    if kwargs_name == "SelectorBasedRecall":
-        return SelectorBasedRecall(name, kwargs)
+    if kwargs_name == "TwoStageRecall":
+        return TwoStageRecall(name, kwargs)
 
 class RecallAttribute(FeatureSelectorTemplate):
 
@@ -487,17 +487,18 @@ class AutoEncoder(nn.Module):
     def get_encoded_features(self, x):
         return self.encoder(x)
 
-
-class SelectorBasedRecall(FeatureSelectorTemplate):
-    """基于多个特征选择器投票的特征召回方法，包括无监督方法"""
+class TwoStageRecall(FeatureSelectorTemplate):
+    """两阶段特征召回方法：随机选择 + 多选择器投票"""
 
     def __init__(self, name, configs=None):
         self.name = name
         self.is_encapsulated = configs.get("IsEncapsulated", True)
 
-        # 特征选择器的参数
-        selector_configs = configs.get("SelectorConfigs", {})
+        # 第一阶段：随机选择参数
+        self.random_select_ratio = configs.get("RandomSelectRatio", 0.3)  # 随机选择的特征比例
 
+        # 第二阶段：特征选择器参数
+        selector_configs = configs.get("SelectorConfigs", {})
         # 有监督方法参数
         self.mi_percentile = selector_configs.get("MutualInfoPercentile", 10)
         self.variance_threshold = selector_configs.get("VarianceThreshold", 0.1)
@@ -515,7 +516,7 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         self.ae_learning_rate = selector_configs.get("AELearningRate", 0.001)
         self.ae_reconstruction_threshold = selector_configs.get("AEReconstructionThreshold", 0.1)
 
-        # 最少需要多少个选择器选中才召回
+        # 投票阈值
         self.min_votes = selector_configs.get("MinVotes", 2)
 
     def train_autoencoder(self, X, input_dim):
@@ -527,16 +528,12 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=self.ae_learning_rate)
 
-        # 转换数据为torch张量
         X_tensor = torch.FloatTensor(X).to(device)
-
-        # 创建数据加载器
         dataset = torch.utils.data.TensorDataset(X_tensor, X_tensor)
         dataloader = torch.utils.data.DataLoader(
             dataset, batch_size=self.ae_batch_size, shuffle=True
         )
 
-        # 训练模型
         model.train()
         for epoch in range(self.ae_epochs):
             total_loss = 0
@@ -548,7 +545,6 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
                 optimizer.step()
                 total_loss += loss.item()
 
-        # 计算每个特征的重构误差
         model.eval()
         with torch.no_grad():
             reconstructed = model(X_tensor)
@@ -556,7 +552,6 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
                 torch.abs(X_tensor - reconstructed), dim=0
             ).cpu().numpy()
 
-        # 选择重构误差小的特征
         important_features = np.where(
             reconstruction_errors < np.percentile(
                 reconstruction_errors,
@@ -585,25 +580,25 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         if len(no_selected_ids) == 0:
             return f_select_ids, f_select_infos
 
+        # === 第一阶段：随机选择 ===
+        random_select_num = int(len(no_selected_ids) * self.random_select_ratio)
+        random_selected_ids = random.sample(no_selected_ids, random_select_num)
+
         # 构建用于特征选择的数据
-        X_unselected = X_train[:, no_selected_ids]
+        X_random_selected = X_train[:, random_selected_ids]
 
         # 数据标准化
         scaler = StandardScaler()
-        X_normalized = scaler.fit_transform(X_unselected)
+        X_normalized = scaler.fit_transform(X_random_selected)
 
-        # 存储每个选择器选择的特征
+        # === 第二阶段：多选择器投票 ===
         selected_features = []
         selector_names = []
-
-        # 存储每个特征选择器的详细结果
         selector_results = defaultdict(dict)
-
-        # === 有监督特征选择方法 ===
 
         # 1. 互信息特征选择
         try:
-            mi_scores = mutual_info_classif(X_unselected, y_train)
+            mi_scores = mutual_info_classif(X_random_selected, y_train)
             mi_threshold = np.percentile(mi_scores, 100 - self.mi_percentile)
             mi_selected = np.where(mi_scores >= mi_threshold)[0]
             selected_features.extend(mi_selected)
@@ -621,7 +616,7 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         # 2. 方差阈值特征选择
         try:
             selector = VarianceThreshold(threshold=self.variance_threshold)
-            selector.fit(X_unselected)
+            selector.fit(X_random_selected)
             var_selected = np.where(selector.get_support())[0]
             selected_features.extend(var_selected)
             selector_names.append("Variance")
@@ -638,7 +633,7 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         # 3. 随机森林特征重要性
         try:
             rf = RandomForestClassifier(n_estimators=100, random_state=42)
-            rf.fit(X_unselected, y_train)
+            rf.fit(X_random_selected, y_train)
             importances = rf.feature_importances_
             rf_threshold = np.percentile(importances, 100 - self.rf_importance_percentile)
             rf_selected = np.where(importances >= rf_threshold)[0]
@@ -654,14 +649,11 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         except Exception as e:
             print(f"随机森林特征选择失败: {str(e)}")
 
-        # === 无监督特征选择方法 ===
-
-        # 1. PCA特征选择
+        # 4. PCA特征选择
         try:
             pca = PCA(n_components=self.pca_variance_ratio, svd_solver='full')
             pca.fit(X_normalized)
 
-            # 获取每个原始特征对主成分的贡献
             feature_importance = np.sum(np.abs(pca.components_), axis=0)
             pca_threshold = np.percentile(feature_importance, 100 - self.mi_percentile)
             pca_selected = np.where(feature_importance >= pca_threshold)[0]
@@ -680,10 +672,10 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         except Exception as e:
             print(f"PCA特征选择失败: {str(e)}")
 
-        # 2. AutoEncoder特征选择
+        # 5. AutoEncoder特征选择
         try:
             ae_selected, reconstruction_errors = self.train_autoencoder(
-                X_normalized, X_unselected.shape[1]
+                X_normalized, X_random_selected.shape[1]
             )
             selected_features.extend(ae_selected)
             selector_names.append("AutoEncoder")
@@ -700,16 +692,16 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
         except Exception as e:
             print(f"AutoEncoder特征选择失败: {str(e)}")
 
-        # 统计每个特征被选中的次数
+        # 统计投票结果
         if selected_features:
             feature_votes = Counter(selected_features)
 
             # 获取被足够多选择器选中的特征
-            recall_features = [feat for feat, votes in feature_votes.items()
-                               if votes >= self.min_votes]
+            final_selected_features = [feat for feat, votes in feature_votes.items()
+                                       if votes >= self.min_votes]
 
             # 将索引映射回原始特征空间
-            recall_ids = [no_selected_ids[i] for i in recall_features]
+            recall_ids = [random_selected_ids[i] for i in final_selected_features]
 
             # 获取召回特征的原始数据
             X_recalled = X_train[:, recall_ids]
@@ -719,10 +711,10 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
 
             # 构建每个召回特征的详细信息
             recalled_feature_info = []
-            for feat_idx in recall_features:
+            for feat_idx in final_selected_features:
                 feat_info = {
-                    "original_index": no_selected_ids[feat_idx],
-                    "feature_name": feature_names[no_selected_ids[feat_idx]],
+                    "original_index": random_selected_ids[feat_idx],
+                    "feature_name": feature_names[random_selected_ids[feat_idx]],
                     "vote_count": feature_votes[feat_idx],
                     "selected_by": []
                 }
@@ -731,7 +723,6 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
                 for selector_name, result in selector_results.items():
                     if feat_idx in result["selected_features"]:
                         feat_info["selected_by"].append(selector_name)
-                        # 添加该选择器对这个特征的评分
                         if "importance_scores" in result:
                             feat_info[f"{selector_name}_score"] = result["importance_scores"][feat_idx]
                         elif "reconstruction_errors" in result:
@@ -743,7 +734,8 @@ class SelectorBasedRecall(FeatureSelectorTemplate):
 
             # 记录召回信息
             f_select_infos.update({
-                "RecallNum": len(recall_ids),
+                "RandomSelectedNum": random_select_num,
+                "FinalRecallNum": len(recall_ids),
                 "ActiveSelectors": len(selector_names),
                 "SelectorNames": selector_names,
                 "RecalledFeatures": recalled_feature_info,
