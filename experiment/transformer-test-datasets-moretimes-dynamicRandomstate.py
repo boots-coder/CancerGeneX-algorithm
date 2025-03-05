@@ -174,11 +174,15 @@ if __name__ == '__main__':
 
         return X, Y
 
-
+    #
+    # # 数据集列表
+    # datasets = [
+    #     "ALLAML.mat", "colon.mat", "GLI_85.mat",
+    #     "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
+    # ]
     # 数据集列表
     datasets = [
-        "ALLAML.mat", "colon.mat", "GLI_85.mat",
-        "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
+        "colon.mat"
     ]
 
     # 数据路径

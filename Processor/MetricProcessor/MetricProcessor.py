@@ -73,7 +73,7 @@ class AvgMetricProcessor(MetricProcessorWrapper):
         final_probs = self.obtain_final_probs(need_finfos)
 
         final_preds = np.argmax(final_probs, axis=1)
-        metric = self.calucate_metric(final_preds, y_val, self.classifier_method)
+        metric = self.calucate_metric(y_val, final_preds, self.classifier_method)
         return metric
 
     def obtain_final_probs(self, need_finfos):

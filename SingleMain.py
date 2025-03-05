@@ -16,8 +16,8 @@ if __name__ == '__main__':
         "ClassNum": class_num,  # 注意这个参数一定要改
         "Metric": "acc",
         "DataType": {"Global"},
-### 这里取消了标准化的Standardization -- 具体见SelectorWrapper
-        #todo 后续改进-数据标准化
+
+        # 这里取消了标准化的Standardization -- 具体见SelectorWrapper
         "PreProcessors": {
             "MinMax": {
                 "Type": "Standardization",
@@ -26,26 +26,31 @@ if __name__ == '__main__':
                 "FeaturesType": []
             },
         },
-#卡方检验用不了
-        # "FeatureSelector": {
-        #     "GCLasso": {
-        #         "Type": "FeatureSelection",
-        #         "Method": "GCLasso",
-        #         "Parameter": {},
-        #     },
-        #     "RecallAttribute": {
-        #         "name": "RecallAttribute",
-        #         "Type": "RecallAttribute",
-        #         "Method": "RecallAttribute",
-        #         "Parameter": {0.1},
-        #     },
-        # },
+
         "FeatureSelector": {
-            "GCLasso": {
+            # "GCLasso": {
+            #     "Type": "FeatureSelection",
+            #     "Method": "GCLasso",
+            #     "Parameter": {},
+            # },
+            "VotingSelector": {
                 "Type": "FeatureSelection",
-                "Method": "GCLasso",
-                "Parameter": {},
+                "Method": "VotingSelector",
+                "Parameter": {
+                    "max_layers": 5,
+                    "min_votes_percentage": 0.3,
+                    "current_layer": 1,  # 初始层级，会在每一层调用时更新
+                    "selectors_config": {
+                        "lasso_threshold": 0.0001,
+                        "f_test_p_value": 0.05,
+                        "variance_threshold": 0.01,
+                        "mutual_info_threshold": 0.05,
+                        "chi2_p_value": 0.05,
+                        "correlation_threshold": 0.1
+                    }
+                },
             },
+
             "RecallAttribute": {
                 "name": "TwoStageRecall",
                 "Type": "RecallAttribute",
@@ -73,9 +78,12 @@ if __name__ == '__main__':
                     }
                 },
             },
-        },            "CategoryImbalance": {
-            "Name" : "RandomOverSampler",
-            "Type" : "CategoryImbalance",
+
+        },
+
+        "CategoryImbalance": {
+            "Name": "RandomOverSampler",
+            "Type": "CategoryImbalance",
             "Parameter": {},
         },
 
@@ -101,7 +109,6 @@ if __name__ == '__main__':
             "Type": "AvgMetricProcessor",
             "ClassifierMethod": "acc",
         },
-# zishiying 3 个 ---
 
         "CascadeClassifier": {
             "AdaptiveEnsembleClassifyByNum": {
@@ -217,7 +224,6 @@ if __name__ == '__main__':
             }
         },
     }
-
     def load_data(name, file_path, config):
         """
         Load dataset based on the provided name and file path.
@@ -247,7 +253,7 @@ if __name__ == '__main__':
 
     # 测试仅GLI_85数据集举例
     datasets = {
-        "SMK_CAN_187.mat": "data/SMK_CAN_187.mat"
+        "colon": "data/colon.mat"
     }
 
     for name, file_path in datasets.items():
@@ -263,7 +269,7 @@ if __name__ == '__main__':
             # 注意：这里的 50/70 = 0.714..., 原代码中是(50/70)
             # 如果原代码是写死的 (50/70)，请保持一致
             x_train, x_val, y_train, y_val = train_test_split(
-                x_train_val, y_train_val, test_size=(50/70), random_state=42, stratify=y_train_val
+                x_train_val, y_train_val, test_size=(10/70), random_state=42, stratify=y_train_val
             )
             # 使用训练集和验证集训练模型（不使用测试集）
             model = UnimodalModel(config)

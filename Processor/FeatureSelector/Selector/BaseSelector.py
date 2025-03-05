@@ -4,21 +4,217 @@ from Processor.FeatureSelector.Selector.SelectorWrapper import SelectorWrapper
 
 # 获取基础选择器
 def get_base_selector(name, config):
-    method_name = config.get("Method", None)  # 从配置中获取方法名
+    method_name = config.get("Method", None)
     if method_name == "GCLasso":
-        return GCLasso(name, config)  # 如果方法是"GCLasso"，返回GCLasso选择器实例
+        return GCLasso(name, config)
     elif method_name == "GCFClassif":
-        return GCFClassif(name, config)  # 如果方法是"GCFClassif"，返回GCFClassif选择器实例
+        return GCFClassif(name, config)
     elif method_name == "GCVariance":
-        return GCVariance(name, config)  # 如果方法是"GCVariance"，返回GCVariance选择器实例
+        return GCVariance(name, config)
     elif method_name == "GCMutualInfo":
-        return GCMutualInfo(name, config)  # 如果方法是"GCMutualInfo"，返回GCMutualInfo选择器实例
+        return GCMutualInfo(name, config)
     elif method_name == "GCChiSquare":
-        return GCChiSquare(name, config)  # 如果方法是"GCChiSquare"，返回GCChiSquare选择器实例
+        return GCChiSquare(name, config)
     elif method_name == "GCCorrelation":
-        return GCCorrelation(name, config)  # 如果方法是"GCCorrelation"，返回GCCorrelation选择器实例
+        return GCCorrelation(name, config)
+    # elif method_name == "VotingSelector":
+    #     return VotingFeatureSelector(name, config)
+    # get_base_selector 内部改一下:
+    elif method_name == "VotingSelector":
+        # 在这里把对应子配置再取出来
+        param_dict = config.get("Parameter", {})
+        return VotingFeatureSelector(name, param_dict)
     else:
-        raise ValueError("Invalid method name")  # 如果方法名不匹配，抛出异常
+        raise ValueError("Invalid method name")
+
+
+class VotingFeatureSelector(SelectorWrapper):
+    """
+    基于多种特征选择器投票的特征选择方法
+    根据网络层级动态调整投票阈值，层级越深，投票阈值越低
+    """
+
+    def __init__(self, name, kwargs):
+        from sklearn.base import BaseEstimator, TransformerMixin
+
+        # 确保安全获取参数，处理嵌套字典结构
+        params = kwargs.get("Parameter", {}) if isinstance(kwargs, dict) else {}
+
+        # 获取配置参数
+        self.max_layers = params.get("max_layers", 5)
+        self.min_votes_percentage = params.get("min_votes_percentage", 0.3)
+        self.selectors_config = params.get("selectors_config", {})
+        self.current_layer = params.get("current_layer", 1)
+
+        # 创建一个基本估计器类
+        class DummyEstimator(BaseEstimator, TransformerMixin):
+            def fit(self, X, y):
+                return self
+
+            def transform(self, X):
+                return X
+
+            def fit_transform(self, X, y=None):
+                return self.fit(X, y).transform(X)
+
+        # 初始化基本估计器
+        self.dummy_estimator = DummyEstimator()
+
+        # 初始化父类
+        super(VotingFeatureSelector, self).__init__(name, DummyEstimator, {})
+
+        # 必须明确设置 est 属性
+        self.est = self.dummy_estimator
+
+        # 初始化所有子选择器
+        self.selectors = self._initialize_selectors()
+
+    def _initialize_selectors(self):
+        """初始化所有特征选择器"""
+        selectors = []
+
+        try:
+            # 创建Lasso选择器
+            lasso_config = {"Method": "GCLasso", "coef": self.selectors_config.get("lasso_threshold", 0.0001)}
+            selectors.append(GCLasso("Lasso", lasso_config))
+
+            # 创建F检验选择器
+            f_classif_config = {"Method": "GCFClassif", "P": self.selectors_config.get("f_test_p_value", 0.05)}
+            selectors.append(GCFClassif("F-test", f_classif_config))
+
+            # 创建方差选择器
+            variance_config = {"Method": "GCVariance",
+                               "threshold": self.selectors_config.get("variance_threshold", 0.01)}
+            selectors.append(GCVariance("Variance", variance_config))
+
+            # 创建互信息选择器
+            mutual_info_config = {"Method": "GCMutualInfo",
+                                  "threshold": self.selectors_config.get("mutual_info_threshold", 0.05)}
+            selectors.append(GCMutualInfo("MutualInfo", mutual_info_config))
+
+            # 创建相关性选择器
+            corr_config = {"Method": "GCCorrelation",
+                           "threshold": self.selectors_config.get("correlation_threshold", 0.1)}
+            selectors.append(GCCorrelation("Correlation", corr_config))
+        except Exception as e:
+            print(f"Error initializing selectors: {e}")
+            # 确保返回至少一个选择器，避免空列表
+            if not selectors:
+                try:
+                    variance_config = {"Method": "GCVariance", "threshold": 0.01}
+                    selectors.append(GCVariance("Variance", variance_config))
+                except:
+                    pass
+
+        return selectors
+
+    def fit(self, X_train, y_train):
+        """训练所有选择器"""
+        # 确保 est 属性已设置
+        if not hasattr(self, 'est') or self.est is None:
+            from sklearn.base import BaseEstimator, TransformerMixin
+            class DummyEstimator(BaseEstimator, TransformerMixin):
+                def fit(self, X, y): return self
+
+                def transform(self, X): return X
+
+            self.est = DummyEstimator()
+
+        # 拟合基本估计器
+        self.est.fit(X_train, y_train)
+
+        # 拟合所有子选择器
+        working_selectors = []
+        for selector in self.selectors:
+            try:
+                selector.fit(X_train, y_train)
+                working_selectors.append(selector)
+            except Exception as e:
+                print(f"Warning: Selector {selector.name} failed to fit: {e}")
+
+        # 更新选择器列表，只保留成功拟合的选择器
+        self.selectors = working_selectors if working_selectors else self.selectors
+
+        return self
+
+    def transform(self, X):
+        """根据投票结果选择特征"""
+        selected_indices, _ = self._obtain_selected_index(X, None)
+        return X[:, selected_indices] if len(selected_indices) > 0 else X
+
+    def _obtain_selected_index(self, X_train, y_train=None):
+        """根据投票机制获取选中的特征索引"""
+        n_features = X_train.shape[1]
+        vote_counts = np.zeros(n_features)
+
+        # 获取每个选择器选择的特征
+        selector_results = {}
+        for selector in self.selectors:
+            try:
+                if hasattr(selector, '_obtain_selected_index'):
+                    indices, info = selector._obtain_selected_index(X_train, y_train)
+                    selector_results[selector.name] = indices
+                    for idx in indices:
+                        if 0 <= idx < n_features:  # 确保索引有效
+                            vote_counts[idx] += 1
+            except Exception as e:
+                print(f"Warning: Selector {selector.name} failed in feature selection: {e}")
+
+        # 计算当前层的投票阈值
+        max_votes = max(1, len(self.selectors))  # 防止除以零
+        layer_ratio = (self.max_layers - self.current_layer + 1) / self.max_layers
+        vote_threshold = max(1, int(max_votes * layer_ratio),
+                             int(max_votes * self.min_votes_percentage))
+
+        # 选择投票数超过阈值的特征
+        select_idxs = []
+        select_infos = {}
+
+        for idx, votes in enumerate(vote_counts):
+            if votes >= vote_threshold:
+                select_idxs.append(idx)
+                select_infos[idx] = votes / max_votes  # 归一化的投票得分
+
+        # 如果没有特征被选中，至少选择投票最多的前5%特征
+        if len(select_idxs) == 0:
+            min_features = max(int(n_features * 0.05), 1)
+            top_indices = np.argsort(-vote_counts)[:min_features]
+            select_idxs = top_indices.tolist()
+            for idx in select_idxs:
+                select_infos[idx] = vote_counts[idx] / max_votes
+
+        select_infos["Num"] = len(select_idxs)
+        select_infos["Name"] = self.name
+        select_infos["Layer"] = self.current_layer
+        select_infos["VoteThreshold"] = vote_threshold
+        select_infos["SelectorResults"] = selector_results
+
+        return select_idxs, select_infos
+
+    def obtain_all_index(self, X=None):
+        """获取所有特征的投票情况"""
+        if X is None:
+            return {"inds": [], "metrics": []}
+
+        n_features = X.shape[1]
+        vote_counts = np.zeros(n_features)
+
+        for selector in self.selectors:
+            try:
+                if hasattr(selector, 'obtain_all_index'):
+                    all_info = selector.obtain_all_index(X)
+                    for i, idx in enumerate(all_info["inds"]):
+                        if 0 <= idx < n_features:  # 确保索引有效
+                            vote_counts[idx] += 1
+            except Exception as e:
+                print(f"Warning: Selector {selector.name} failed in obtain_all_index: {e}")
+
+        select_infos = {"inds": [], "metrics": []}
+        for idx in range(n_features):
+            select_infos["inds"].append(idx)
+            select_infos["metrics"].append(vote_counts[idx] / max(1, len(self.selectors)))
+
+        return select_infos
 class GCLasso(SelectorWrapper):
     def __init__(self, name, kwargs):
         from sklearn.linear_model import Lasso  # 引入Lasso模型

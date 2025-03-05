@@ -501,7 +501,7 @@ class TwoStageRecall(FeatureSelectorTemplate):
         selector_configs = configs.get("SelectorConfigs", {})
         # 有监督方法参数
         self.mi_percentile = selector_configs.get("MutualInfoPercentile", 10)
-        self.variance_threshold = selector_configs.get("VarianceThreshold", 0.1)
+        # self.variance_threshold = selector_configs.get("VarianceThreshold", 0.1)
         self.rf_importance_percentile = selector_configs.get("RFImportancePercentile", 10)
         self.f_score_percentile = selector_configs.get("FScorePercentile", 10)
         self.chi2_percentile = selector_configs.get("Chi2Percentile", 10)
@@ -613,22 +613,22 @@ class TwoStageRecall(FeatureSelectorTemplate):
         except Exception as e:
             print(f"互信息特征选择失败: {str(e)}")
 
-        # 2. 方差阈值特征选择
-        try:
-            selector = VarianceThreshold(threshold=self.variance_threshold)
-            selector.fit(X_random_selected)
-            var_selected = np.where(selector.get_support())[0]
-            selected_features.extend(var_selected)
-            selector_names.append("Variance")
-
-            selector_results["Variance"] = {
-                "selected_features": var_selected,
-                "variances": selector.variances_,
-                "threshold": self.variance_threshold
-            }
-            f_select_infos["Variance_Selected_Count"] = len(var_selected)
-        except Exception as e:
-            print(f"方差阈值特征选择失败: {str(e)}")
+        # # 2. 方差阈值特征选择
+        # try:
+        #     selector = VarianceThreshold(threshold=self.variance_threshold)
+        #     selector.fit(X_random_selected)
+        #     var_selected = np.where(selector.get_support())[0]
+        #     selected_features.extend(var_selected)
+        #     selector_names.append("Variance")
+        #
+        #     selector_results["Variance"] = {
+        #         "selected_features": var_selected,
+        #         "variances": selector.variances_,
+        #         "threshold": self.variance_threshold
+        #     }
+        #     f_select_infos["Variance_Selected_Count"] = len(var_selected)
+        # except Exception as e:
+        #     print(f"方差阈值特征选择失败: {str(e)}")
 
         # 3. 随机森林特征重要性
         try:

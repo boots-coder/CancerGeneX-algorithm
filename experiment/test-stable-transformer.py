@@ -226,13 +226,16 @@ if __name__ == '__main__':
         return X, Y
 
 
+    # datasets = [
+    #     "ALLAML.mat", "colon.mat", "GLI_85.mat",
+    #     "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
+    # ]
     datasets = [
-        "ALLAML.mat", "colon.mat", "GLI_85.mat",
-        "leukemia.mat", "Prostate_GE.mat", "SMK_CAN_187.mat"
+        "SMK_CAN_187.mat"
     ]
 
     data_dir = "../data/"
-    n_runs = 5
+    n_runs = 10
 
     # 修改为普通的Python列表
     random_states = list(range(RANDOM_SEED, RANDOM_SEED + n_runs))
